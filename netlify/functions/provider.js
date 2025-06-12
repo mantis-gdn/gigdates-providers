@@ -265,6 +265,11 @@ If you have any urgent questions, feel free to reply to this email.
       border-radius: 6px;
       margin-bottom: 1.5em;
     }
+    .logo {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 1em;
+    }
     @media (max-width: 600px) {
       body { padding: 0.8em; }
       h1 { font-size: 1.5em; }
@@ -274,6 +279,7 @@ If you have any urgent questions, feel free to reply to this email.
   </style>
 </head>
 <body>
+  ${provider.logo_url ? `<img src="${provider.logo_url}" alt="${provider.name} logo" class="logo">` : ''}
   <h1>${provider.name}</h1>
   ${thankYouHtml}
   <p>${provider.bio}</p>

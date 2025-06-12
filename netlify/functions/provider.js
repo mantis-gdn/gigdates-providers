@@ -15,7 +15,6 @@ exports.handler = async function (event) {
     };
   }
 
-  // ---------- POST: Form submission ----------
   if (isPost) {
     const form = querystring.parse(event.body);
 
@@ -50,7 +49,6 @@ exports.handler = async function (event) {
 
       const resend = new Resend(process.env.RESEND_API_KEY);
 
-      // Admin email
       const adminText = `
 New lead for ${form.provider_id}!
 
@@ -64,8 +62,7 @@ Budget: ${form.budget}
 Message:
 ${form.message}
 
-Referral Source: ${form.referral_source}
-      `.trim();
+Referral Source: ${form.referral_source}`.trim();
 
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
@@ -74,7 +71,6 @@ Referral Source: ${form.referral_source}
         text: adminText
       });
 
-      // Client confirmation
       const confirmationText = `
 Hi ${form.client_name},
 
@@ -86,8 +82,7 @@ We'll be in touch soon to discuss your needs and schedule the next steps.
 
 If you have any urgent questions, feel free to reply to this email.
 
-- The Gig Dates Team
-      `.trim();
+- The Gig Dates Team`.trim();
 
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
@@ -110,7 +105,6 @@ If you have any urgent questions, feel free to reply to this email.
         },
         body: 'Redirecting...'
       };
-
     } catch (err) {
       return {
         statusCode: 500,
@@ -119,12 +113,11 @@ If you have any urgent questions, feel free to reply to this email.
     }
   }
 
-  // ---------- GET: Provider profile page ----------
   const qs = event.queryStringParameters || {};
   const isThankYou = qs.submitted === 'true';
 
   const thankYouHtml = isThankYou ? `
-    <div style="border: 1px solid #0c0; background: #dfd; padding: 1em; margin-bottom: 2em;">
+    <div class="thank-you">
       <h2>Thank you, ${qs.name}!</h2>
       <p>We’ve received your request for <strong>${qs.service}</strong>.</p>
       <p>A confirmation has been sent to <strong>${qs.email}</strong>.</p>
@@ -220,28 +213,83 @@ If you have any urgent questions, feel free to reply to this email.
     `).join('');
 
     const html = `
-      <html>
-        <head><title>${provider.name}</title></head>
-        <body>
-          <h1>${provider.name}</h1>
-          ${thankYouHtml}
-          <p>${provider.bio}</p>
-          <p><a href="${provider.website}" target="_blank">Website</a></p>
-          <p>
-            ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
-            ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
-            ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
-          </p>
-
-          <h2>Services Offered</h2>
-          <ul>${servicesHtml}</ul>
-
-          ${formHtml}
-
-          <h2>Leads (test mode)</h2>
-          <ul>${leadsHtml}</ul>
-        </body>
-      </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${provider.name}</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 1em;
+      margin: 0;
+      line-height: 1.6;
+    }
+    a { color: #1e90ff; text-decoration: none; }
+    h1, h2 { color: #ffcc00; margin-top: 1.5em; }
+    ul { padding-left: 1.2em; }
+    li { margin-bottom: 1em; }
+    form {
+      background-color: #111;
+      padding: 1em;
+      border-radius: 8px;
+      margin-top: 1em;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 0.5em;
+      margin-top: 0.3em;
+      margin-bottom: 1em;
+      border: none;
+      border-radius: 4px;
+      font-size: 1em;
+    }
+    input, select, textarea {
+      background-color: #222;
+      color: #fff;
+    }
+    button {
+      background-color: #ffcc00;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover { background-color: #ffaa00; }
+    .thank-you {
+      border: 1px solid #0f0;
+      background: #003300;
+      padding: 1em;
+      border-radius: 6px;
+      margin-bottom: 1.5em;
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.8em; }
+      h1 { font-size: 1.5em; }
+      h2 { font-size: 1.2em; }
+      input, select, textarea, button { font-size: 1em; }
+    }
+  </style>
+</head>
+<body>
+  <h1>${provider.name}</h1>
+  ${thankYouHtml}
+  <p>${provider.bio}</p>
+  <p><a href="${provider.website}" target="_blank">Website</a></p>
+  <p>
+    ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
+    ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
+    ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
+  </p>
+  <h2>Services Offered</h2>
+  <ul>${servicesHtml}</ul>
+  ${formHtml}
+  <h2>Leads (test mode)</h2>
+  <ul>${leadsHtml}</ul>
+</body>
+</html>
     `;
 
     return {
@@ -249,7 +297,6 @@ If you have any urgent questions, feel free to reply to this email.
       headers: { 'Content-Type': 'text/html' },
       body: html
     };
-
   } catch (err) {
     return {
       statusCode: 500,

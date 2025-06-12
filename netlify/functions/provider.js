@@ -5,7 +5,6 @@ const { Resend } = require('resend');
 exports.handler = async function (event) {
   const isPost = event.httpMethod === 'POST';
 
-  // Extract provider_id from URL path
   const match = event.path.match(/\/providers\/([^\/\?]+)/);
   const providerId = match ? match[1] : null;
 
@@ -16,7 +15,7 @@ exports.handler = async function (event) {
     };
   }
 
-  // Handle POST (form submission)
+  // ---------- POST: Form submission ----------
   if (isPost) {
     const form = querystring.parse(event.body);
 
@@ -49,9 +48,9 @@ exports.handler = async function (event) {
         ]
       );
 
-      // ✅ Email Notifications
       const resend = new Resend(process.env.RESEND_API_KEY);
 
+      // Admin email
       const adminText = `
 New lead for ${form.provider_id}!
 
@@ -75,6 +74,7 @@ Referral Source: ${form.referral_source}
         text: adminText
       });
 
+      // Client confirmation
       const confirmationText = `
 Hi ${form.client_name},
 
@@ -96,7 +96,6 @@ If you have any urgent questions, feel free to reply to this email.
         text: confirmationText
       });
 
-      // Redirect with thank-you params
       const queryParams = new URLSearchParams({
         submitted: 'true',
         name: form.client_name,
@@ -120,7 +119,7 @@ If you have any urgent questions, feel free to reply to this email.
     }
   }
 
-  // Handle GET (display provider page)
+  // ---------- GET: Provider profile page ----------
   const qs = event.queryStringParameters || {};
   const isThankYou = qs.submitted === 'true';
 
@@ -168,8 +167,8 @@ If you have any urgent questions, feel free to reply to this email.
       </li>
     `).join('');
 
-    const leadsHtml = leadRows.map(lead => `
-      <li><strong>${lead.client_name}</strong> (${lead.service_requested}): ${lead.message}</li>
+    const serviceOptions = serviceRows.map(service => `
+      <option value="${service.name}">${service.name}</option>
     `).join('');
 
     const formHtml = `
@@ -190,7 +189,10 @@ If you have any urgent questions, feel free to reply to this email.
         </label><br><br>
 
         <label>Service Needed:<br>
-          <input type="text" name="service_requested" required>
+          <select name="service_requested" required>
+            <option value="" disabled selected>Select a service</option>
+            ${serviceOptions}
+          </select>
         </label><br><br>
 
         <label>Preferred Timeframe:<br>
@@ -212,6 +214,10 @@ If you have any urgent questions, feel free to reply to this email.
         <button type="submit">Submit Lead</button>
       </form>
     `;
+
+    const leadsHtml = leadRows.map(lead => `
+      <li><strong>${lead.client_name}</strong> (${lead.service_requested}): ${lead.message}</li>
+    `).join('');
 
     const html = `
       <html>

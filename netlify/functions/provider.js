@@ -1,0 +1,253 @@
+const mysql = require('mysql2/promise');
+const querystring = require('querystring');
+const { Resend } = require('resend');
+
+exports.handler = async function (event) {
+  const isPost = event.httpMethod === 'POST';
+
+  // Extract provider_id from URL path
+  const match = event.path.match(/\/providers\/([^\/\?]+)/);
+  const providerId = match ? match[1] : null;
+
+  if (!providerId) {
+    return {
+      statusCode: 400,
+      body: 'Missing or invalid provider ID in URL.'
+    };
+  }
+
+  // Handle POST (form submission)
+  if (isPost) {
+    const form = querystring.parse(event.body);
+
+    try {
+      const pool = await mysql.createPool({
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        port: process.env.DB_PORT,
+        ssl: { rejectUnauthorized: true }
+      });
+
+      await pool.query(
+        `INSERT INTO provider_leads (
+          provider_id, client_name, client_email, client_phone,
+          service_requested, preferred_timeframe, budget, message,
+          referral_source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          form.provider_id,
+          form.client_name,
+          form.client_email,
+          form.client_phone || '',
+          form.service_requested,
+          form.preferred_timeframe || '',
+          form.budget || '',
+          form.message || '',
+          form.referral_source || ''
+        ]
+      );
+
+      // ✅ Email Notifications
+      const resend = new Resend(process.env.RESEND_API_KEY);
+
+      const adminText = `
+New lead for ${form.provider_id}!
+
+Name: ${form.client_name}
+Email: ${form.client_email}
+Phone: ${form.client_phone}
+Service: ${form.service_requested}
+Timeframe: ${form.preferred_timeframe}
+Budget: ${form.budget}
+
+Message:
+${form.message}
+
+Referral Source: ${form.referral_source}
+      `.trim();
+
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM,
+        to: process.env.EMAIL_TO,
+        subject: `New Lead for ${form.provider_id}`,
+        text: adminText
+      });
+
+      const confirmationText = `
+Hi ${form.client_name},
+
+Thanks for reaching out to ${form.provider_id} through Gig Dates Network!
+
+We received your request for: ${form.service_requested}
+
+We'll be in touch soon to discuss your needs and schedule the next steps.
+
+If you have any urgent questions, feel free to reply to this email.
+
+- The Gig Dates Team
+      `.trim();
+
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM,
+        to: form.client_email,
+        subject: `Thanks for contacting ${form.provider_id}`,
+        text: confirmationText
+      });
+
+      // Redirect with thank-you params
+      const queryParams = new URLSearchParams({
+        submitted: 'true',
+        name: form.client_name,
+        email: form.client_email,
+        service: form.service_requested
+      }).toString();
+
+      return {
+        statusCode: 302,
+        headers: {
+          Location: `/providers/${form.provider_id}?${queryParams}`
+        },
+        body: 'Redirecting...'
+      };
+
+    } catch (err) {
+      return {
+        statusCode: 500,
+        body: `Database or email error: ${err.message}`
+      };
+    }
+  }
+
+  // Handle GET (display provider page)
+  const qs = event.queryStringParameters || {};
+  const isThankYou = qs.submitted === 'true';
+
+  const thankYouHtml = isThankYou ? `
+    <div style="border: 1px solid #0c0; background: #dfd; padding: 1em; margin-bottom: 2em;">
+      <h2>Thank you, ${qs.name}!</h2>
+      <p>We’ve received your request for <strong>${qs.service}</strong>.</p>
+      <p>A confirmation has been sent to <strong>${qs.email}</strong>.</p>
+    </div>
+  ` : '';
+
+  const pool = await mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    ssl: { rejectUnauthorized: true }
+  });
+
+  try {
+    const [providerRows] = await pool.query(
+      'SELECT * FROM providers WHERE provider_id = ? LIMIT 1',
+      [providerId]
+    );
+    const [serviceRows] = await pool.query(
+      'SELECT * FROM provider_services WHERE provider_id = ?',
+      [providerId]
+    );
+    const [leadRows] = await pool.query(
+      'SELECT * FROM provider_leads WHERE provider_id = ? ORDER BY submitted_at DESC',
+      [providerId]
+    );
+
+    if (!providerRows.length) {
+      return { statusCode: 404, body: "Provider not found" };
+    }
+
+    const provider = providerRows[0];
+
+    const servicesHtml = serviceRows.map(service => `
+      <li>
+        <strong>${service.name}</strong> — ${service.description}<br>
+        <em>$${service.starting_price} ${service.unit}</em>
+      </li>
+    `).join('');
+
+    const leadsHtml = leadRows.map(lead => `
+      <li><strong>${lead.client_name}</strong> (${lead.service_requested}): ${lead.message}</li>
+    `).join('');
+
+    const formHtml = `
+      <h2>Submit an Inquiry</h2>
+      <form action="/providers/${providerId}" method="POST">
+        <input type="hidden" name="provider_id" value="${providerId}" />
+
+        <label>Your Name:<br>
+          <input type="text" name="client_name" required>
+        </label><br><br>
+
+        <label>Your Email:<br>
+          <input type="email" name="client_email" required>
+        </label><br><br>
+
+        <label>Your Phone:<br>
+          <input type="tel" name="client_phone">
+        </label><br><br>
+
+        <label>Service Needed:<br>
+          <input type="text" name="service_requested" required>
+        </label><br><br>
+
+        <label>Preferred Timeframe:<br>
+          <input type="text" name="preferred_timeframe">
+        </label><br><br>
+
+        <label>Budget:<br>
+          <input type="text" name="budget">
+        </label><br><br>
+
+        <label>Message:<br>
+          <textarea name="message" rows="4"></textarea>
+        </label><br><br>
+
+        <label>How did you hear about us?<br>
+          <input type="text" name="referral_source">
+        </label><br><br>
+
+        <button type="submit">Submit Lead</button>
+      </form>
+    `;
+
+    const html = `
+      <html>
+        <head><title>${provider.name}</title></head>
+        <body>
+          <h1>${provider.name}</h1>
+          ${thankYouHtml}
+          <p>${provider.bio}</p>
+          <p><a href="${provider.website}" target="_blank">Website</a></p>
+          <p>
+            ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
+            ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
+            ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
+          </p>
+
+          <h2>Services Offered</h2>
+          <ul>${servicesHtml}</ul>
+
+          ${formHtml}
+
+          <h2>Leads (test mode)</h2>
+          <ul>${leadsHtml}</ul>
+        </body>
+      </html>
+    `;
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'text/html' },
+      body: html
+    };
+
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: `Database error on fetch: ${err.message}`
+    };
+  }
+};

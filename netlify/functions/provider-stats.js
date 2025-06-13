@@ -9,7 +9,6 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
-  // 🔐 Session check
   const cookies = event.headers.cookie || '';
   const sessionMatch = cookies.match(/provider_id=([^;]+)/);
   const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
@@ -33,61 +32,63 @@ exports.handler = async function(event) {
     ssl: { rejectUnauthorized: true }
   });
 
-  const [[provider]] = await pool.query(
+  const [providerRows] = await pool.query(
     'SELECT name FROM providers WHERE provider_id = ?',
     [providerId]
   );
 
-  if (!provider) {
-    return {
-      statusCode: 404,
-      body: 'Provider not found'
-    };
+  if (!providerRows.length) {
+    return { statusCode: 404, body: 'Provider not found' };
   }
 
-  const [rows] = await pool.query(
-    'SELECT service_requested, COUNT(*) AS count FROM provider_leads WHERE provider_id = ? GROUP BY service_requested',
+  const providerName = providerRows[0].name;
+  const [leads] = await pool.query(
+    'SELECT service_requested, COUNT(*) as count FROM provider_leads WHERE provider_id = ? GROUP BY service_requested',
     [providerId]
   );
 
-  const labels = rows.map(row => row.service_requested);
-  const data = rows.map(row => row.count);
+  const labels = leads.map(row => row.service_requested);
+  const data = leads.map(row => row.count);
 
   const html = `<!DOCTYPE html>
   <html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${provider.name} - Stats</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${providerName} Stats</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; margin-bottom: 0.5em; }
-      .top-bar {
+      h1 { color: #ffcc00; }
+      canvas { background: #fff; border-radius: 8px; margin-top: 2em; }
+      .nav-buttons {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        gap: 0.5em;
+        margin-bottom: 1em;
       }
-      .logout-link {
+      .nav-buttons a {
+        background: #222;
         color: #fff;
-        background: #f00;
-        padding: 0.5em 1em;
+        padding: 0.6em 1em;
         text-decoration: none;
         border-radius: 4px;
         font-weight: bold;
+        transition: background 0.2s;
       }
-      .logout-link:hover {
-        background: #c00;
+      .nav-buttons a:hover {
+        background: #444;
       }
-      canvas { max-width: 100%; background: #111; padding: 1em; border-radius: 8px; }
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <h1>Stats for ${provider.name}</h1>
-      <a class="logout-link" href="/providers/${providerId}/logout">Logout</a>
+    <h1>${providerName} - Stats</h1>
+    <div class="nav-buttons">
+      <a href="/providers/${providerId}/admin">Dashboard</a>
+      <a href="/providers/${providerId}/admin/stats">Stats</a>
+      <a href="/providers/${providerId}/admin/profile">Profile</a>
+      <a href="/providers/${providerId}/logout">Logout</a>
     </div>
-    <canvas id="leadsChart" width="400" height="300"></canvas>
+    <canvas id="leadsChart" width="400" height="200"></canvas>
     <script>
       const ctx = document.getElementById('leadsChart').getContext('2d');
       new Chart(ctx, {
@@ -103,13 +104,16 @@ exports.handler = async function(event) {
           }]
         },
         options: {
+          responsive: true,
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { color: '#fff' }
+              ticks: { color: '#fff' },
+              grid: { color: '#444' }
             },
             x: {
-              ticks: { color: '#fff' }
+              ticks: { color: '#fff' },
+              grid: { color: '#444' }
             }
           },
           plugins: {

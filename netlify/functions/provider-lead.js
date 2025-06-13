@@ -11,7 +11,6 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID or lead ID' };
   }
 
-  // 🔐 Access control
   const cookies = event.headers.cookie || '';
   const sessionMatch = cookies.match(/provider_id=([^;]+)/);
   const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
@@ -55,8 +54,9 @@ exports.handler = async function(event) {
     };
   }
 
-  const formatLabel = (key) =>
-    key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatLabel = (key) => {
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  };
 
   if (isPost) {
     const form = new URLSearchParams(event.body);
@@ -93,12 +93,9 @@ exports.handler = async function(event) {
     };
   }
 
-  const leadFields = Object.entries(lead)
-    .map(
-      ([key, value]) =>
-        `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${value}</div></div>`
-    )
-    .join('');
+  const leadFields = Object.entries(lead).map(([key, value]) => {
+    return `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${value}</div></div>`;
+  }).join('');
 
   const messageBanner = submitted
     ? `<div style="background:#0a0; color:#fff; padding:0.5em; margin-bottom:1em;">Message sent successfully.</div>`
@@ -112,23 +109,14 @@ exports.handler = async function(event) {
     <title>Lead Detail - ${provider.name}</title>
     <style>
       body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; margin-bottom: 0.2em; }
-      .top-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .logout-link {
-        color: #fff;
-        background: #f00;
-        padding: 0.5em 1em;
-        text-decoration: none;
-        border-radius: 4px;
-        font-weight: bold;
-      }
-      .logout-link:hover {
-        background: #c00;
-      }
+      h1 { color: #ffcc00; }
+      nav { margin-bottom: 1em; }
+      nav a { margin-right: 0.5em; padding: 0.5em 1em; border-radius: 5px; font-weight: bold; color: #fff; text-decoration: none; display: inline-block; }
+      .blue { background-color: #007bff; }
+      .purple { background-color: #6f42c1; }
+      .teal { background-color: #20c997; }
+      .red { background-color: #dc3545; }
+      nav a:hover { opacity: 0.85; }
       .field { margin-bottom: 1em; }
       label { display: block; font-weight: bold; }
       .value { margin-top: 0.2em; }
@@ -136,11 +124,14 @@ exports.handler = async function(event) {
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <h1>Lead Detail for ${provider.name}</h1>
-      <a class="logout-link" href="/providers/${providerId}/logout">Logout</a>
-    </div>
     ${messageBanner}
+    <h1>Lead Detail for ${provider.name}</h1>
+    <nav>
+      <a class="blue" href="/providers/${providerId}/admin">Dashboard</a>
+      <a class="purple" href="/providers/${providerId}/admin/stats">Stats</a>
+      <a class="teal" href="/providers/${providerId}/admin/profile">Profile</a>
+      <a class="red" href="/providers/${providerId}/logout">Logout</a>
+    </nav>
     ${leadFields}
     <form method="POST">
       <div class="field">

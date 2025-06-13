@@ -9,6 +9,7 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
+  // Session check
   const cookies = event.headers.cookie || '';
   const sessionMatch = cookies.match(/provider_id=([^;]+)/);
   const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
@@ -80,29 +81,24 @@ exports.handler = async function(event) {
     <title>${providerName} Admin</title>
     <style>
       body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      .top-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-bottom: 1em;
-      }
-      .nav-links {
-        display: flex;
-        gap: 0.5em;
-      }
-      .nav-button {
-        background: #ffcc00;
-        color: #000;
-        padding: 0.4em 0.8em;
-        text-decoration: none;
-        border-radius: 4px;
+      h1 { color: #ffcc00; }
+      nav { margin-bottom: 1em; }
+      nav form { display: inline; margin-right: 0.5em; }
+      .nav-btn {
+        display: inline-block;
+        padding: 0.5em 1em;
+        border: none;
+        border-radius: 5px;
         font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        color: #fff;
       }
-      .nav-button:hover {
-        background: #e6b800;
-      }
-      h1 { color: #ffcc00; margin: 0; }
+      .blue { background-color: #007bff; }
+      .purple { background-color: #6f42c1; }
+      .teal { background-color: #20c997; }
+      .red { background-color: #dc3545; }
+      .nav-btn:hover { opacity: 0.85; }
       table { width: 100%; border-collapse: collapse; margin-top: 1em; }
       th, td { border: 1px solid #666; padding: 0.5em; }
       select, button { padding: 0.3em; }
@@ -110,13 +106,13 @@ exports.handler = async function(event) {
     </style>
   </head>
   <body>
-    <div class="top-bar">
-      <h1>Admin Panel for ${providerName}</h1>
-      <div class="nav-links">
-        <a class="nav-button" href="/providers/${providerId}/admin/stats">📊 Stats</a>
-        <a class="nav-button" href="/providers/${providerId}/logout">Logout</a>
-      </div>
-    </div>
+    <h1>Admin Panel for ${providerName}</h1>
+    <nav>
+      <a class="nav-btn blue" href="/providers/${providerId}/admin">Dashboard</a>
+      <a class="nav-btn purple" href="/providers/${providerId}/admin/stats">Stats</a>
+      <a class="nav-btn teal" href="/providers/${providerId}/admin/profile">Profile</a>
+      <a class="nav-btn red" href="/providers/${providerId}/logout">Logout</a>
+    </nav>
     <table>
       <thead>
         <tr>

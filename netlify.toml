@@ -40,6 +40,6 @@
 
 [[redirects]]
   from = "/providers/:provider_id/admin/profile"
-  to = "/.netlify/functions/provider-profile"
+  to = "/.netlify/functions/provider-profile?provider_id=:provider_id"
   status = 200
   force = true

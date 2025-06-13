@@ -43,10 +43,11 @@ exports.handler = async function(event) {
     const instagram = form.get('instagram');
     const youtube = form.get('youtube');
     const logo_url = form.get('logo_url');
+    const login_password = form.get('login_password');
 
     await pool.query(
-      `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ? WHERE provider_id = ?`,
-      [name, bio, website, facebook, instagram, youtube, logo_url, providerId]
+      `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ? WHERE provider_id = ?`,
+      [name, bio, website, facebook, instagram, youtube, logo_url, login_password, providerId]
     );
 
     return {
@@ -77,9 +78,7 @@ exports.handler = async function(event) {
       input, textarea { width: 100%; padding: 0.5em; margin-top: 0.2em; }
       button { margin-top: 1em; padding: 0.5em 1em; background: #ffcc00; border: none; color: #000; font-weight: bold; cursor: pointer; }
       button:hover { background: #ffaa00; }
-      .menu {
-        margin-bottom: 1em;
-      }
+      .menu { margin-bottom: 1em; }
       .menu a {
         display: inline-block;
         margin-right: 0.5em;
@@ -90,9 +89,7 @@ exports.handler = async function(event) {
         border-radius: 4px;
         font-weight: bold;
       }
-      .menu a:hover {
-        background: #555;
-      }
+      .menu a:hover { background: #555; }
     </style>
   </head>
   <body>
@@ -123,7 +120,10 @@ exports.handler = async function(event) {
         <input type="url" name="youtube" value="${provider.youtube || ''}">
       </label>
       <label>Logo URL:
-        <input type="url" name="logo_url" value="${provider.logo_url || ''}">
+        <input type="text" name="logo_url" value="${provider.logo_url || ''}">
+      </label>
+      <label>Login Password:
+        <input type="text" name="login_password" value="${provider.login_password || ''}" required>
       </label>
       <button type="submit">Save Changes</button>
     </form>

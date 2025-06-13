@@ -12,3 +12,18 @@
   from = "/providers/:provider_id"
   to = "/.netlify/functions/provider?provider_id=:provider_id"
   status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/admin"
+  to = "/.netlify/functions/provider-admin?provider_id=:provider_id"
+  status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/admin/stats"
+  to = "/.netlify/functions/provider-stats?provider_id=:provider_id"
+  status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/admin/:lead_id"
+  to = "/.netlify/functions/provider-lead?provider_id=:provider_id&lead_id=:lead_id"
+  status = 200

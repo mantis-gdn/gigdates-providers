@@ -1,8 +1,22 @@
+[build]
+  command = "# no build command"
+  functions = "netlify/functions"
+  publish = ""
+
 [[redirects]]
-  from = "/providers/:provider_id/admin/profile"
-  to = "/.netlify/functions/provider-profile?provider_id=:provider_id"
+  from = "/"
+  to = "/.netlify/functions/index"
   status = 200
-  force = true
+
+[[redirects]]
+  from = "/providers/:provider_id"
+  to = "/.netlify/functions/provider?provider_id=:provider_id"
+  status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/admin"
+  to = "/.netlify/functions/provider-admin?provider_id=:provider_id"
+  status = 200
 
 [[redirects]]
   from = "/providers/:provider_id/admin/stats"
@@ -10,6 +24,22 @@
   status = 200
 
 [[redirects]]
+  from = "/providers/:provider_id/admin/profile"
+  to = "/.netlify/functions/provider-profile?provider_id=:provider_id"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/providers/:provider_id/admin/:lead_id"
   to = "/.netlify/functions/provider-lead?provider_id=:provider_id&lead_id=:lead_id"
+  status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/login"
+  to = "/.netlify/functions/provider-login?provider_id=:provider_id"
+  status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/logout"
+  to = "/.netlify/functions/provider-logout?provider_id=:provider_id"
   status = 200

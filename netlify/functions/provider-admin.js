@@ -9,7 +9,6 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
-  // ✅ Session check inside handler
   const cookies = event.headers.cookie || '';
   const sessionMatch = cookies.match(/provider_id=([^;]+)/);
   const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
@@ -81,7 +80,29 @@ exports.handler = async function(event) {
     <title>${providerName} Admin</title>
     <style>
       body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 1em;
+      }
+      .nav-links {
+        display: flex;
+        gap: 0.5em;
+      }
+      .nav-button {
+        background: #ffcc00;
+        color: #000;
+        padding: 0.4em 0.8em;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .nav-button:hover {
+        background: #e6b800;
+      }
+      h1 { color: #ffcc00; margin: 0; }
       table { width: 100%; border-collapse: collapse; margin-top: 1em; }
       th, td { border: 1px solid #666; padding: 0.5em; }
       select, button { padding: 0.3em; }
@@ -89,7 +110,13 @@ exports.handler = async function(event) {
     </style>
   </head>
   <body>
-    <h1>Admin Panel for ${providerName}</h1>
+    <div class="top-bar">
+      <h1>Admin Panel for ${providerName}</h1>
+      <div class="nav-links">
+        <a class="nav-button" href="/providers/${providerId}/admin/stats">📊 Stats</a>
+        <a class="nav-button" href="/providers/${providerId}/logout">Logout</a>
+      </div>
+    </div>
     <table>
       <thead>
         <tr>

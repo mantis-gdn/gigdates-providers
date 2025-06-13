@@ -11,7 +11,7 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID or lead ID' };
   }
 
-  // Session check
+  // 🔐 Access control
   const cookies = event.headers.cookie || '';
   const sessionMatch = cookies.match(/provider_id=([^;]+)/);
   const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
@@ -56,7 +56,7 @@ exports.handler = async function(event) {
   }
 
   const formatLabel = (key) =>
-    key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
   if (isPost) {
     const form = new URLSearchParams(event.body);
@@ -93,12 +93,12 @@ exports.handler = async function(event) {
     };
   }
 
-  const leadFields = Object.entries(lead).map(([key, value]) => {
-    if (key === 'submitted_at') {
-      value = new Date(value).toLocaleString();
-    }
-    return `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${value}</div></div>`;
-  }).join('');
+  const leadFields = Object.entries(lead)
+    .map(
+      ([key, value]) =>
+        `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${value}</div></div>`
+    )
+    .join('');
 
   const messageBanner = submitted
     ? `<div style="background:#0a0; color:#fff; padding:0.5em; margin-bottom:1em;">Message sent successfully.</div>`
@@ -112,7 +112,23 @@ exports.handler = async function(event) {
     <title>Lead Detail - ${provider.name}</title>
     <style>
       body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
+      h1 { color: #ffcc00; margin-bottom: 0.2em; }
+      .top-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .logout-link {
+        color: #fff;
+        background: #f00;
+        padding: 0.5em 1em;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .logout-link:hover {
+        background: #c00;
+      }
       .field { margin-bottom: 1em; }
       label { display: block; font-weight: bold; }
       .value { margin-top: 0.2em; }
@@ -120,8 +136,11 @@ exports.handler = async function(event) {
     </style>
   </head>
   <body>
+    <div class="top-bar">
+      <h1>Lead Detail for ${provider.name}</h1>
+      <a class="logout-link" href="/providers/${providerId}/logout">Logout</a>
+    </div>
     ${messageBanner}
-    <h1>Lead Detail for ${provider.name}</h1>
     ${leadFields}
     <form method="POST">
       <div class="field">

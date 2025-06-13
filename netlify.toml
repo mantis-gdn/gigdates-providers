@@ -32,3 +32,8 @@
   from = "/providers/:provider_id/login"
   to = "/.netlify/functions/provider-login?provider_id=:provider_id"
   status = 200
+
+[[redirects]]
+  from = "/providers/:provider_id/logout"
+  to = "/.netlify/functions/provider-logout?provider_id=:provider_id"
+  status = 200

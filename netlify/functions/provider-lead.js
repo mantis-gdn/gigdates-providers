@@ -11,6 +11,21 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID or lead ID' };
   }
 
+  // Session check
+  const cookies = event.headers.cookie || '';
+  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
+  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+
+  if (sessionProviderId !== providerId) {
+    return {
+      statusCode: 302,
+      headers: {
+        Location: `/providers/${providerId}/login`
+      },
+      body: 'Redirecting to login...'
+    };
+  }
+
   const isPost = event.httpMethod === 'POST';
   const submitted = event.queryStringParameters?.submitted === 'true';
 
@@ -40,25 +55,8 @@ exports.handler = async function(event) {
     };
   }
 
-  const formatLabel = (key) => {
-    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-  };
-
-  const formatValue = (key, value) => {
-    if (key.includes('date') || key.includes('time') || key.endsWith('_at')) {
-      const dt = new Date(value);
-      if (!isNaN(dt)) {
-        return dt.toLocaleString(undefined, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: '2-digit'
-        });
-      }
-    }
-    return value;
-  };
+  const formatLabel = (key) =>
+    key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   if (isPost) {
     const form = new URLSearchParams(event.body);
@@ -75,7 +73,7 @@ exports.handler = async function(event) {
     if (messageText) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       const leadDetails = Object.entries(lead)
-        .map(([k, v]) => `${formatLabel(k)}: ${formatValue(k, v)}`)
+        .map(([k, v]) => `${formatLabel(k)}: ${v}`)
         .join('<br>');
 
       await resend.emails.send({
@@ -96,7 +94,10 @@ exports.handler = async function(event) {
   }
 
   const leadFields = Object.entries(lead).map(([key, value]) => {
-    return `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${formatValue(key, value)}</div></div>`;
+    if (key === 'submitted_at') {
+      value = new Date(value).toLocaleString();
+    }
+    return `<div class="field"><label>${formatLabel(key)}:</label><div class="value">${value}</div></div>`;
   }).join('');
 
   const messageBanner = submitted

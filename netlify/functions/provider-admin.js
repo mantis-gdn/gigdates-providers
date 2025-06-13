@@ -9,6 +9,21 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
+  // ✅ Session check inside handler
+  const cookies = event.headers.cookie || '';
+  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
+  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+
+  if (sessionProviderId !== providerId) {
+    return {
+      statusCode: 302,
+      headers: {
+        Location: `/providers/${providerId}/login`
+      },
+      body: 'Redirecting to login...'
+    };
+  }
+
   const isPost = event.httpMethod === 'POST';
 
   const pool = await mysql.createPool({

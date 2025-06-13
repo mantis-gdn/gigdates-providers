@@ -24,6 +24,12 @@
   status = 200
 
 [[redirects]]
+  from = "/providers/:provider_id/admin/profile"
+  to = "/.netlify/functions/provider-profile?provider_id=:provider_id"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/providers/:provider_id/admin/:lead_id"
   to = "/.netlify/functions/provider-lead?provider_id=:provider_id&lead_id=:lead_id"
   status = 200
@@ -37,9 +43,3 @@
   from = "/providers/:provider_id/logout"
   to = "/.netlify/functions/provider-logout?provider_id=:provider_id"
   status = 200
-
-[[redirects]]
-  from = "/providers/:provider_id/admin/profile"
-  to = "/.netlify/functions/provider-profile?provider_id=:provider_id"
-  status = 200
-  force = true

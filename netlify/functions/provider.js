@@ -169,40 +169,40 @@ If you have any urgent questions, feel free to reply to this email.
       <form action="/providers/${providerId}" method="POST">
         <input type="hidden" name="provider_id" value="${providerId}" />
 
-        <label>Your Name:<br>
+        <label>Your Name:
           <input type="text" name="client_name" required>
-        </label><br><br>
+        </label>
 
-        <label>Your Email:<br>
+        <label>Your Email:
           <input type="email" name="client_email" required>
-        </label><br><br>
+        </label>
 
-        <label>Your Phone:<br>
+        <label>Your Phone:
           <input type="tel" name="client_phone">
-        </label><br><br>
+        </label>
 
-        <label>Service Needed:<br>
+        <label>Service Needed:
           <select name="service_requested" required>
             <option value="" disabled selected>Select a service</option>
             ${serviceOptions}
           </select>
-        </label><br><br>
+        </label>
 
-        <label>Preferred Timeframe:<br>
+        <label>Preferred Timeframe:
           <input type="text" name="preferred_timeframe">
-        </label><br><br>
+        </label>
 
-        <label>Budget:<br>
+        <label>Budget:
           <input type="text" name="budget">
-        </label><br><br>
+        </label>
 
-        <label>Message:<br>
+        <label>Message:
           <textarea name="message" rows="4"></textarea>
-        </label><br><br>
+        </label>
 
-        <label>How did you hear about us?<br>
+        <label>How did you hear about us?
           <input type="text" name="referral_source">
-        </label><br><br>
+        </label>
 
         <button type="submit">Submit Lead</button>
       </form>
@@ -227,6 +227,9 @@ If you have any urgent questions, feel free to reply to this email.
       padding: 1em;
       margin: 0;
       line-height: 1.6;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
     }
     a { color: #1e90ff; text-decoration: none; }
     h1, h2 { color: #ffcc00; margin-top: 1.5em; }
@@ -246,6 +249,7 @@ If you have any urgent questions, feel free to reply to this email.
       border: none;
       border-radius: 4px;
       font-size: 1em;
+      box-sizing: border-box;
     }
     input, select, textarea {
       background-color: #222;
@@ -270,11 +274,21 @@ If you have any urgent questions, feel free to reply to this email.
       height: auto;
       margin-bottom: 1em;
     }
-    @media (max-width: 600px) {
-      body { padding: 0.8em; }
-      h1 { font-size: 1.5em; }
-      h2 { font-size: 1.2em; }
-      input, select, textarea, button { font-size: 1em; }
+    @media (max-width: 768px) {
+      body {
+        padding: 1em;
+        font-size: 1em;
+      }
+      h1 { font-size: 1.6em; }
+      h2 { font-size: 1.3em; }
+    }
+    @media (max-width: 480px) {
+      body {
+        padding: 0.8em;
+        font-size: 0.95em;
+      }
+      h1 { font-size: 1.4em; }
+      h2 { font-size: 1.1em; }
     }
   </style>
 </head>

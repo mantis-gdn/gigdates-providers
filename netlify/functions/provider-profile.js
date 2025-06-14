@@ -45,7 +45,6 @@ exports.handler = async function(event) {
     const logo_url = form.get('logo_url');
     const login_password = form.get('login_password');
 
-    // Get current hashed password
     const [[currentProvider]] = await pool.query(
       'SELECT login_password FROM providers WHERE provider_id = ?',
       [providerId]
@@ -53,7 +52,6 @@ exports.handler = async function(event) {
 
     let hashedPassword = currentProvider.login_password;
 
-    // Hash only if new password is entered and it's not already hashed
     if (login_password && login_password.trim() !== '') {
       const isSame = await bcrypt.compare(login_password, currentProvider.login_password).catch(() => false);
       if (!isSame) {
@@ -69,6 +67,37 @@ exports.handler = async function(event) {
       [name, bio, website, facebook, instagram, youtube, logo_url, hashedPassword, providerId]
     );
 
+    const serviceIds = form.getAll('service_id');
+    const serviceKeys = form.getAll('service_key');
+    const serviceNames = form.getAll('service_name');
+    const serviceDescriptions = form.getAll('service_description');
+    const servicePrices = form.getAll('starting_price');
+    const serviceUnits = form.getAll('unit');
+
+    for (let i = 0; i < serviceIds.length; i++) {
+      const id = serviceIds[i];
+      const serviceKey = serviceKeys[i];
+      const serviceName = serviceNames[i];
+      const description = serviceDescriptions[i];
+      const price = servicePrices[i] || null;
+      const unit = serviceUnits[i];
+
+      if (id && id.trim() !== '') {
+        await pool.query(
+          `UPDATE provider_services
+           SET service_id = ?, name = ?, description = ?, starting_price = ?, unit = ?
+           WHERE id = ? AND provider_id = ?`,
+          [serviceKey, serviceName, description, price, unit, id, providerId]
+        );
+      } else if (serviceKey && serviceKey.trim() !== '') {
+        await pool.query(
+          `INSERT INTO provider_services (provider_id, service_id, name, description, starting_price, unit)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [providerId, serviceKey, serviceName, description, price, unit]
+        );
+      }
+    }
+
     return {
       statusCode: 302,
       headers: {
@@ -83,6 +112,11 @@ exports.handler = async function(event) {
     [providerId]
   );
 
+  const [services] = await pool.query(
+    'SELECT * FROM provider_services WHERE provider_id = ?',
+    [providerId]
+  );
+
   const html = `
   <!DOCTYPE html>
   <html>
@@ -91,13 +125,56 @@ exports.handler = async function(event) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Edit Profile - ${provider.name}</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
-      label { display: block; margin-top: 1em; }
-      input, textarea { width: 100%; padding: 0.5em; margin-top: 0.2em; }
-      button { margin-top: 1em; padding: 0.5em 1em; background: #ffcc00; border: none; color: #000; font-weight: bold; cursor: pointer; }
-      button:hover { background: #ffaa00; }
-      .menu { margin-bottom: 1em; }
+      body {
+        font-family: sans-serif;
+        background: #000;
+        color: #fff;
+        padding: 1em;
+      }
+      h1 {
+        color: #ffcc00;
+      }
+      h2 {
+        margin-top: 2em;
+        color: #ccc;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+        color: #ffcc00;
+      }
+      input, textarea, select {
+        width: 100%;
+        padding: 0.5em;
+        margin-top: 0.2em;
+        background: #333;
+        color: #ffcc00;
+        border: 1px solid #555;
+        border-radius: 4px;
+      }
+      input:focus, textarea:focus, select:focus {
+        outline: none;
+        border-color: #ffcc00;
+        box-shadow: 0 0 5px #ffcc00;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        margin-top: 1em;
+        padding: 0.5em 1em;
+        background: #ffcc00;
+        border: none;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #ffaa00;
+      }
+      .menu {
+        margin-bottom: 1em;
+      }
       .menu a {
         display: inline-block;
         margin-right: 0.5em;
@@ -108,8 +185,37 @@ exports.handler = async function(event) {
         border-radius: 4px;
         font-weight: bold;
       }
-      .menu a:hover { background: #555; }
+      .menu a:hover {
+        background: #555;
+      }
+      .service-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em;
+        background: #111;
+        padding: 1em;
+        border-radius: 6px;
+        margin-bottom: 1em;
+      }
+      .service-row > div {
+        flex: 1;
+        min-width: 200px;
+      }
+      hr {
+        border: 0;
+        height: 1px;
+        background: #444;
+        margin: 2em 0;
+      }
     </style>
+    <script>
+      function addServiceRow() {
+        const container = document.getElementById('service-list');
+        const template = document.getElementById('service-template');
+        const clone = template.content.cloneNode(true);
+        container.appendChild(clone);
+      }
+    </script>
   </head>
   <body>
     <div class="menu">
@@ -141,6 +247,74 @@ exports.handler = async function(event) {
       <label>Logo URL:
         <input type="text" name="logo_url" value="${provider.logo_url || ''}">
       </label>
+
+      <h2>Services</h2>
+      <div id="service-list">
+        ${services.map(service => `
+          <div class="service-row">
+            <input type="hidden" name="service_id" value="${service.id}">
+            <div>
+              <label>Service ID:
+                <input type="text" name="service_key" value="${service.service_id || ''}" required>
+              </label>
+            </div>
+            <div>
+              <label>Service Name:
+                <input type="text" name="service_name" value="${service.name || ''}" required>
+              </label>
+            </div>
+            <div>
+              <label>Description:
+                <textarea name="service_description" rows="2">${service.description || ''}</textarea>
+              </label>
+            </div>
+            <div>
+              <label>Starting Price:
+                <input type="number" step="0.01" name="starting_price" value="${service.starting_price || ''}">
+              </label>
+            </div>
+            <div>
+              <label>Unit:
+                <input type="text" name="unit" value="${service.unit || ''}">
+              </label>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <template id="service-template">
+        <div class="service-row">
+          <input type="hidden" name="service_id" value="">
+          <div>
+            <label>Service ID:
+              <input type="text" name="service_key" required>
+            </label>
+          </div>
+          <div>
+            <label>Service Name:
+              <input type="text" name="service_name" required>
+            </label>
+          </div>
+          <div>
+            <label>Description:
+              <textarea name="service_description" rows="2"></textarea>
+            </label>
+          </div>
+          <div>
+            <label>Starting Price:
+              <input type="number" step="0.01" name="starting_price">
+            </label>
+          </div>
+          <div>
+            <label>Unit:
+              <input type="text" name="unit">
+            </label>
+          </div>
+        </div>
+      </template>
+
+      <button type="button" onclick="addServiceRow()">+ Add New Service</button>
+
       <label>New Login Password:
         <input type="password" name="login_password" placeholder="Enter new password">
       </label>

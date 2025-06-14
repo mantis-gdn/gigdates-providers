@@ -193,6 +193,9 @@ exports.handler = async function (event) {
       <label>Facebook: <input name="facebook" value="${provider.facebook || ''}" /></label>
       <label>Instagram: <input name="instagram" value="${provider.instagram || ''}" /></label>
       <label>YouTube: <input name="youtube" value="${provider.youtube || ''}" /></label>
+      
+      ${provider.logo_url ? `<img src="${provider.logo_url}" alt="Logo" style="max-width: 200px; margin-bottom: 1em; border-radius: 8px;" />` : ''}
+      
       <label>Logo URL: <input name="logo_url" value="${provider.logo_url || ''}" /></label>
       <label>Upload Logo: <input type="file" name="logo" accept="image/*" /></label>
       <label>New Password: <input type="password" name="login_password" /></label>

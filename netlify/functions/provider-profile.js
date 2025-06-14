@@ -68,7 +68,6 @@ exports.handler = async function(event) {
     );
 
     const serviceIds = form.getAll('service_id');
-    const serviceKeys = form.getAll('service_key');
     const serviceNames = form.getAll('service_name');
     const serviceDescriptions = form.getAll('service_description');
     const servicePrices = form.getAll('starting_price');
@@ -76,7 +75,6 @@ exports.handler = async function(event) {
 
     for (let i = 0; i < serviceIds.length; i++) {
       const id = serviceIds[i];
-      const serviceKey = serviceKeys[i];
       const serviceName = serviceNames[i];
       const description = serviceDescriptions[i];
       const price = servicePrices[i] || null;
@@ -85,15 +83,15 @@ exports.handler = async function(event) {
       if (id && id.trim() !== '') {
         await pool.query(
           `UPDATE provider_services
-           SET service_id = ?, name = ?, description = ?, starting_price = ?, unit = ?
+           SET name = ?, description = ?, starting_price = ?, unit = ?
            WHERE id = ? AND provider_id = ?`,
-          [serviceKey, serviceName, description, price, unit, id, providerId]
+          [serviceName, description, price, unit, id, providerId]
         );
-      } else if (serviceKey && serviceKey.trim() !== '') {
+      } else if (serviceName && serviceName.trim() !== '') {
         await pool.query(
-          `INSERT INTO provider_services (provider_id, service_id, name, description, starting_price, unit)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [providerId, serviceKey, serviceName, description, price, unit]
+          `INSERT INTO provider_services (provider_id, name, description, starting_price, unit)
+           VALUES (?, ?, ?, ?, ?)`,
+          [providerId, serviceName, description, price, unit]
         );
       }
     }
@@ -254,11 +252,6 @@ exports.handler = async function(event) {
           <div class="service-row">
             <input type="hidden" name="service_id" value="${service.id}">
             <div>
-              <label>Service ID:
-                <input type="text" name="service_key" value="${service.service_id || ''}" required>
-              </label>
-            </div>
-            <div>
               <label>Service Name:
                 <input type="text" name="service_name" value="${service.name || ''}" required>
               </label>
@@ -285,11 +278,6 @@ exports.handler = async function(event) {
       <template id="service-template">
         <div class="service-row">
           <input type="hidden" name="service_id" value="">
-          <div>
-            <label>Service ID:
-              <input type="text" name="service_key" required>
-            </label>
-          </div>
           <div>
             <label>Service Name:
               <input type="text" name="service_name" required>

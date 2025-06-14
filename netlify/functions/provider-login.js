@@ -1,15 +1,13 @@
-// netlify/functions/provider-login.js
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 
-exports.handler = async function (event) {
+exports.handler = async function(event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/login/);
   const providerId = match ? match[1] : null;
 
   if (!providerId) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
-
-  const isPost = event.httpMethod === 'POST';
 
   const pool = await mysql.createPool({
     host: process.env.DB_HOST,
@@ -20,60 +18,65 @@ exports.handler = async function (event) {
     ssl: { rejectUnauthorized: true }
   });
 
-  if (isPost) {
+  if (event.httpMethod === 'POST') {
     const form = new URLSearchParams(event.body);
-    const password = form.get('password');
+    const enteredPassword = form.get('login_password');
 
+    // Fetch hashed password from DB
     const [[provider]] = await pool.query(
-      'SELECT * FROM providers WHERE provider_id = ? AND login_password = ?',
-      [providerId, password]
+      'SELECT login_password FROM providers WHERE provider_id = ?',
+      [providerId]
     );
 
     if (!provider) {
       return {
         statusCode: 401,
-        body: `<h1 style="color:red">Invalid password</h1><a href="/providers/${providerId}/login">Try Again</a>`
+        body: 'Provider not found.'
       };
     }
 
+    const isValid = await bcrypt.compare(enteredPassword, provider.login_password);
+
+    if (!isValid) {
+      return {
+        statusCode: 401,
+        body: 'Invalid password.'
+      };
+    }
+
+    // Set a cookie for session
     return {
       statusCode: 302,
       headers: {
-        'Set-Cookie': `provider_id=${provider.provider_id}; Path=/; HttpOnly`,
+        'Set-Cookie': `provider_id=${providerId}; Path=/; HttpOnly; Secure`,
         Location: `/providers/${providerId}/admin`
       },
       body: 'Redirecting...'
     };
   }
 
+  // GET login form
   const html = `
   <!DOCTYPE html>
   <html>
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${providerId} Login</title>
+    <title>Provider Login</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 2em; }
-      form { background: #111; padding: 1em; border-radius: 8px; max-width: 400px; margin: 0 auto; }
-      label { display: block; margin-bottom: 0.5em; }
-      input, button {
-        width: 100%;
-        padding: 0.5em;
-        margin-bottom: 1em;
-        border: none;
-        border-radius: 4px;
-        font-size: 1em;
-      }
-      input { background: #222; color: #fff; }
-      button { background: #ffcc00; color: #000; font-weight: bold; }
+      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
+      h1 { color: #ffcc00; }
+      label { display: block; margin-top: 1em; }
+      input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
+      button { margin-top: 1em; padding: 0.5em 1em; background: #ffcc00; border: none; color: #000; font-weight: bold; cursor: pointer; }
+      button:hover { background: #ffaa00; }
     </style>
   </head>
   <body>
-    <h1>Provider Login</h1>
+    <h1>Login</h1>
     <form method="POST">
       <label>Password:
-        <input type="password" name="password" required />
+        <input type="password" name="login_password" required>
       </label>
       <button type="submit">Log In</button>
     </form>

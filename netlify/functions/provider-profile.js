@@ -1,5 +1,5 @@
-// netlify/functions/provider-profile.js
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 
 exports.handler = async function(event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/admin\/profile/);
@@ -45,9 +45,28 @@ exports.handler = async function(event) {
     const logo_url = form.get('logo_url');
     const login_password = form.get('login_password');
 
+    // Get current hashed password
+    const [[currentProvider]] = await pool.query(
+      'SELECT login_password FROM providers WHERE provider_id = ?',
+      [providerId]
+    );
+
+    let hashedPassword = currentProvider.login_password;
+
+    // Hash only if new password is entered and it's not already hashed
+    if (login_password && login_password.trim() !== '') {
+      const isSame = await bcrypt.compare(login_password, currentProvider.login_password).catch(() => false);
+      if (!isSame) {
+        const salt = await bcrypt.genSalt(10);
+        hashedPassword = await bcrypt.hash(login_password, salt);
+      }
+    }
+
     await pool.query(
-      `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ? WHERE provider_id = ?`,
-      [name, bio, website, facebook, instagram, youtube, logo_url, login_password, providerId]
+      `UPDATE providers 
+       SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?
+       WHERE provider_id = ?`,
+      [name, bio, website, facebook, instagram, youtube, logo_url, hashedPassword, providerId]
     );
 
     return {
@@ -122,8 +141,8 @@ exports.handler = async function(event) {
       <label>Logo URL:
         <input type="text" name="logo_url" value="${provider.logo_url || ''}">
       </label>
-      <label>Login Password:
-        <input type="text" name="login_password" value="${provider.login_password || ''}" required>
+      <label>New Login Password:
+        <input type="password" name="login_password" placeholder="Enter new password">
       </label>
       <button type="submit">Save Changes</button>
     </form>

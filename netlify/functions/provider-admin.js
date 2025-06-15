@@ -136,6 +136,8 @@ exports.handler = async function(event) {
         font-size: 1em;
         width: 100%;
         box-sizing: border-box;
+        background: #222;
+        color: #fff;
       }
       form { margin: 0; }
       a { color: #ffcc00; text-decoration: underline; }

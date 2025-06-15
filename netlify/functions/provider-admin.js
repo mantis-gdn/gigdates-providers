@@ -102,7 +102,7 @@ exports.handler = async function(event) {
       table { width: 100%; border-collapse: collapse; margin-top: 1em; }
       th, td { border: 1px solid #666; padding: 0.5em; }
       select, button { padding: 0.3em; }
-      a { color: #66f; text-decoration: underline; }
+      a { color: #fff; text-decoration: underline; }
     </style>
   </head>
   <body>

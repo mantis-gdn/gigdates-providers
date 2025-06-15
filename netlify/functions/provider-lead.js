@@ -2,7 +2,7 @@
 const mysql = require('mysql2/promise');
 const { Resend } = require('resend');
 
-exports.handler = async function(event) {
+exports.handler = async function (event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/admin\/([^\/]+)/);
   const providerId = match ? match[1] : null;
   const leadId = match ? match[2] : null;
@@ -108,19 +108,120 @@ exports.handler = async function(event) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lead Detail - ${provider.name}</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
-      nav { margin-bottom: 1em; }
-      nav a { margin-right: 0.5em; padding: 0.5em 1em; border-radius: 5px; font-weight: bold; color: #fff; text-decoration: none; display: inline-block; }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #000;
+        color: #fff;
+        margin: 0;
+        padding: 1em;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      h1 {
+        color: #ffcc00;
+        font-size: 1.8em;
+        margin-bottom: 0.5em;
+        text-align: center;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        justify-content: center;
+        margin-bottom: 1.5em;
+      }
+
+      nav a {
+        padding: 0.6em 1em;
+        border-radius: 6px;
+        font-weight: bold;
+        color: #fff;
+        text-decoration: none;
+        flex: 1 1 auto;
+        text-align: center;
+      }
+
       .blue { background-color: #007bff; }
       .purple { background-color: #6f42c1; }
       .teal { background-color: #20c997; }
       .red { background-color: #dc3545; }
       nav a:hover { opacity: 0.85; }
-      .field { margin-bottom: 1em; }
-      label { display: block; font-weight: bold; }
-      .value { margin-top: 0.2em; }
-      select, button, textarea { padding: 0.3em; width: 100%; }
+
+      .field {
+        margin-bottom: 1.2em;
+      }
+
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.3em;
+        font-size: 1em;
+      }
+
+      .value {
+        padding: 0.5em;
+        background: #111;
+        border-radius: 4px;
+        word-wrap: break-word;
+        font-size: 0.95em;
+      }
+
+      select,
+      button,
+      textarea {
+        padding: 0.5em;
+        width: 100%;
+        font-size: 1em;
+        border: none;
+        border-radius: 4px;
+        box-sizing: border-box;
+        background: #222;
+        color: #fff;
+      }
+
+      button {
+        background-color: #ffcc00;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 0.5em;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      hr {
+        margin: 2em 0;
+        border: 0;
+        border-top: 1px solid #333;
+      }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 1.4em;
+        }
+
+        nav {
+          flex-direction: column;
+          gap: 0.75em;
+        }
+
+        nav a {
+          font-size: 0.95em;
+        }
+
+        textarea {
+          font-size: 0.9em;
+        }
+
+        .value {
+          font-size: 0.9em;
+        }
+      }
     </style>
   </head>
   <body>

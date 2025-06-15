@@ -80,29 +80,109 @@ exports.handler = async function(event) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${providerName} Admin</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
-      nav { margin-bottom: 1em; }
-      nav form { display: inline; margin-right: 0.5em; }
-      .nav-btn {
-        display: inline-block;
-        padding: 0.5em 1em;
-        border: none;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: none;
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: #000;
         color: #fff;
+        margin: 0;
+        padding: 1em;
       }
+
+      h1 {
+        color: #ffcc00;
+        text-align: center;
+        font-size: 1.75em;
+        margin-bottom: 1em;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        justify-content: center;
+        margin-bottom: 1.5em;
+      }
+
+      .nav-btn {
+        padding: 0.6em 1em;
+        border-radius: 6px;
+        font-weight: bold;
+        color: #fff;
+        text-decoration: none;
+        text-align: center;
+        flex: 1 1 auto;
+      }
+
       .blue { background-color: #007bff; }
       .purple { background-color: #6f42c1; }
       .teal { background-color: #20c997; }
       .red { background-color: #dc3545; }
-      .nav-btn:hover { opacity: 0.85; }
-      table { width: 100%; border-collapse: collapse; margin-top: 1em; }
-      th, td { border: 1px solid #666; padding: 0.5em; }
-      select, button { padding: 0.3em; }
-      a { color: #fff; text-decoration: underline; }
+
+      .nav-btn:hover {
+        opacity: 0.9;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1em;
+      }
+
+      th, td {
+        border: 1px solid #444;
+        padding: 0.75em 0.5em;
+        text-align: left;
+        font-size: 0.95em;
+      }
+
+      select, button {
+        padding: 0.4em;
+        font-size: 1em;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      form {
+        margin: 0;
+      }
+
+      a {
+        color: #ffcc00;
+        text-decoration: underline;
+      }
+
+      @media (max-width: 768px) {
+        table, thead, tbody, th, td, tr {
+          display: block;
+        }
+
+        thead {
+          display: none;
+        }
+
+        tr {
+          background: #111;
+          border: 1px solid #333;
+          border-radius: 6px;
+          margin-bottom: 1em;
+          padding: 0.75em;
+        }
+
+        td {
+          padding: 0.4em 0;
+        }
+
+        td::before {
+          content: attr(data-label);
+          font-weight: bold;
+          display: block;
+          color: #ffcc00;
+        }
+
+        select, button {
+          margin-top: 0.5em;
+        }
+      }
     </style>
   </head>
   <body>

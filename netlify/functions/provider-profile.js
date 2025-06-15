@@ -142,43 +142,110 @@ exports.handler = async function (event) {
   <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Provider Profile</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
-      nav { margin-bottom: 1em; }
-      .nav-btn {
-        display: inline-block;
-        padding: 0.5em 1em;
-        border: none;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-        text-decoration: none;
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #000;
         color: #fff;
+        padding: 1em;
+        margin: 0;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
       }
+
+      h1 {
+        color: #ffcc00;
+        text-align: center;
+        font-size: 1.8em;
+        margin-bottom: 1em;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5em;
+        justify-content: center;
+        margin-bottom: 1.5em;
+      }
+
+      .nav-btn {
+        padding: 0.6em 1em;
+        border-radius: 6px;
+        font-weight: bold;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+        flex: 1 1 auto;
+      }
+
       .blue { background-color: #007bff; }
       .purple { background-color: #6f42c1; }
       .teal { background-color: #20c997; }
       .red { background-color: #dc3545; }
-      .nav-btn:hover { opacity: 0.85; }
-      label { display: block; margin-top: 1em; }
+      .nav-btn:hover { opacity: 0.9; }
+
+      form {
+        background: #111;
+        padding: 1em;
+        border-radius: 8px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 1em;
+        font-weight: bold;
+        color: #ffcc00;
+      }
+
       input, textarea {
         width: 100%;
-        padding: 0.5em;
-        background: #333;
-        color: #ffcc00;
-        border: 1px solid #555;
+        padding: 0.6em;
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
         border-radius: 4px;
+        box-sizing: border-box;
+        margin-top: 0.4em;
       }
+
       button {
-        margin-top: 1em;
-        padding: 0.5em 1em;
-        background: #ffcc00;
+        background-color: #ffcc00;
         color: #000;
-        border: none;
         font-weight: bold;
+        padding: 0.7em 1.2em;
+        border: none;
+        border-radius: 4px;
         cursor: pointer;
+        width: 100%;
       }
-    </style></head><body>
+
+      button:hover {
+        background-color: #ffaa00;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        margin: 1em 0;
+        border-radius: 8px;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 1em;
+        }
+
+        nav {
+          flex-direction: column;
+        }
+
+        h1 {
+          font-size: 1.5em;
+        }
+      }
+    </style>
+    </head>
+    <body>
     <h1>Edit Profile for ${provider.name}</h1>
     <nav>
       <a class="nav-btn blue" href="/providers/${providerId}/admin">Dashboard</a>

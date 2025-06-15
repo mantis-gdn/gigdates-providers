@@ -142,10 +142,6 @@ If you have any urgent questions, feel free to reply to this email.
       'SELECT * FROM provider_services WHERE provider_id = ?',
       [providerId]
     );
-    const [leadRows] = await pool.query(
-      'SELECT * FROM provider_leads WHERE provider_id = ? ORDER BY submitted_at DESC',
-      [providerId]
-    );
 
     if (!providerRows.length) {
       return { statusCode: 404, body: "Provider not found" };
@@ -207,10 +203,6 @@ If you have any urgent questions, feel free to reply to this email.
         <button type="submit">Submit Lead</button>
       </form>
     `;
-
-    const leadsHtml = leadRows.map(lead => `
-      <li><strong>${lead.client_name}</strong> (${lead.service_requested}): ${lead.message}</li>
-    `).join('');
 
     const html = `
 <!DOCTYPE html>
@@ -306,8 +298,6 @@ If you have any urgent questions, feel free to reply to this email.
   <h2>Services Offered</h2>
   <ul>${servicesHtml}</ul>
   ${formHtml}
-  <h2>Leads (test mode)</h2>
-  <ul>${leadsHtml}</ul>
 </body>
 </html>
     `;

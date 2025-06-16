@@ -2,9 +2,12 @@ const mysql = require('mysql2/promise');
 const querystring = require('querystring');
 const { Resend } = require('resend');
 
+// Sanitize CSS to prevent malicious injections
+const sanitizeCSS = (css) =>
+  (css || '').replace(/<\/?script[^>]*>/gi, '').replace(/url\(['"]?javascript:[^'"]*['"]?\)/gi, '');
+
 exports.handler = async function (event) {
   const isPost = event.httpMethod === 'POST';
-
   const match = event.path.match(/\/providers\/([^\/\?]+)/);
   const providerId = match ? match[1] : null;
 
@@ -148,6 +151,7 @@ If you have any urgent questions, feel free to reply to this email.
     }
 
     const provider = providerRows[0];
+    const safeCSS = sanitizeCSS(provider.style_css);
 
     const servicesHtml = serviceRows.map(service => `
       <li>
@@ -282,22 +286,27 @@ If you have any urgent questions, feel free to reply to this email.
       h1 { font-size: 1.4em; }
       h2 { font-size: 1.1em; }
     }
+    #provider-theme {
+      ${safeCSS}
+    }
   </style>
 </head>
 <body>
-  ${provider.logo_url ? `<img src="${provider.logo_url}" alt="${provider.name} logo" class="logo">` : ''}
-  <h1>${provider.name}</h1>
-  ${thankYouHtml}
-  <p>${provider.bio}</p>
-  <p><a href="${provider.website}" target="_blank">Website</a></p>
-  <p>
-    ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
-    ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
-    ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
-  </p>
-  <h2>Services Offered</h2>
-  <ul>${servicesHtml}</ul>
-  ${formHtml}
+  <div id="provider-theme">
+    ${provider.logo_url ? `<img src="${provider.logo_url}" alt="${provider.name} logo" class="logo">` : ''}
+    <h1>${provider.name}</h1>
+    ${thankYouHtml}
+    <p>${provider.bio}</p>
+    <p><a href="${provider.website}" target="_blank">Website</a></p>
+    <p>
+      ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
+      ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
+      ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
+    </p>
+    <h2>Services Offered</h2>
+    <ul>${servicesHtml}</ul>
+    ${formHtml}
+  </div>
 </body>
 </html>
     `;

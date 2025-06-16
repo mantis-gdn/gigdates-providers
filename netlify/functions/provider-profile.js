@@ -96,7 +96,7 @@ exports.handler = async function (event) {
           }
 
           await pool.query(
-            `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ? WHERE provider_id = ?`,
+            `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?, style_css = ? WHERE provider_id = ?`,
             [
               fields.name,
               fields.bio,
@@ -106,6 +106,7 @@ exports.handler = async function (event) {
               fields.youtube,
               finalLogoUrl,
               hashedPassword,
+              fields.style_css || '',
               providerId,
             ]
           );
@@ -179,6 +180,11 @@ exports.handler = async function (event) {
     [providerId]
   );
 
+  const sanitizeCSS = (css) =>
+    (css || '').replace(/<\/?script[^>]*>/gi, '').replace(/url\(['"]?javascript:[^'"]*['"]?\)/gi, '');
+
+  const safeCSS = sanitizeCSS(provider.style_css);
+
   const html = `<!DOCTYPE html>
   <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Edit Provider Profile</title>
@@ -196,7 +202,13 @@ exports.handler = async function (event) {
     button:hover { background-color: #ffaa00; }
     img { max-width: 100%; height: auto; margin: 1em 0; border-radius: 8px; }
   </style>
+  <style>
+    #provider-theme {
+      ${safeCSS}
+    }
+  </style>
   </head><body>
+  <div id="provider-theme">
     <h1>Edit Profile for ${provider.name}</h1>
     <nav>
       <a class="nav-btn blue" href="/providers/${providerId}/admin">Dashboard</a>
@@ -215,6 +227,10 @@ exports.handler = async function (event) {
       <label>Logo URL: <input name="logo_url" value="${provider.logo_url || ''}" /></label>
       <label>Upload Logo: <input type="file" name="logo" accept="image/*" /></label>
       <label>New Password: <input type="password" name="login_password" /></label>
+
+      <label>Custom CSS (for #provider-theme only):
+        <textarea name="style_css" rows="10" placeholder="#provider-theme { background: #111; }">${provider.style_css || ''}</textarea>
+      </label>
 
       <h2>Services</h2>
       <div style="display:flex; flex-direction:column; gap:1em; margin-bottom:2em;">
@@ -267,6 +283,7 @@ exports.handler = async function (event) {
 
       <button type="submit">Save Changes</button>
     </form>
+  </div>
   </body></html>`;
 
   return {

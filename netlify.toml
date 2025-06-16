@@ -9,6 +9,11 @@
   status = 200
 
 [[redirects]]
+  from = "/providers/new"
+  to = "/.netlify/functions/provider-new"
+  status = 200
+
+[[redirects]]
   from = "/providers/:provider_id"
   to = "/.netlify/functions/provider?provider_id=:provider_id"
   status = 200

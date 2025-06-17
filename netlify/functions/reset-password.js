@@ -11,8 +11,7 @@ exports.handler = async function (event) {
     ssl: { rejectUnauthorized: true }
   });
 
-  const url = new URL(event.rawUrl || `${process.env.BASE_URL}${event.path}${event.queryStringParameters ? '?' + new URLSearchParams(event.queryStringParameters) : ''}`);
-  const token = url.searchParams.get('token');
+  const token = event.queryStringParameters?.token;
 
   if (!token) {
     return {
@@ -33,34 +32,48 @@ exports.handler = async function (event) {
       };
     }
 
-    const [[resetRecord]] = await pool.query(
-      'SELECT provider_id, expires_at FROM provider_resets WHERE token = ?',
-      [token]
-    );
+    try {
+      const [[resetRecord]] = await pool.query(
+        'SELECT provider_id, expires_at FROM provider_resets WHERE token = ?',
+        [token]
+      );
 
-    if (!resetRecord || new Date(resetRecord.expires_at) < new Date()) {
+      if (!resetRecord) {
+        return {
+          statusCode: 400,
+          body: 'Reset token not found.'
+        };
+      }
+
+      if (new Date(resetRecord.expires_at) < new Date()) {
+        return {
+          statusCode: 400,
+          body: 'Reset token has expired.'
+        };
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+
+      await pool.query(
+        'UPDATE providers SET login_password = ? WHERE provider_id = ?',
+        [hashed, resetRecord.provider_id]
+      );
+
+      await pool.query(
+        'DELETE FROM provider_resets WHERE token = ?',
+        [token]
+      );
+
       return {
-        statusCode: 400,
-        body: 'This password reset link is invalid or has expired.'
+        statusCode: 200,
+        body: 'Your password has been reset successfully. You may now log in.'
+      };
+    } catch (err) {
+      return {
+        statusCode: 500,
+        body: `Database error: ${err.message}`
       };
     }
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-
-    await pool.query(
-      'UPDATE providers SET login_password = ? WHERE provider_id = ?',
-      [hashed, resetRecord.provider_id]
-    );
-
-    await pool.query(
-      'DELETE FROM provider_resets WHERE token = ?',
-      [token]
-    );
-
-    return {
-      statusCode: 200,
-      body: 'Your password has been reset successfully. You may now log in.'
-    };
   }
 
   // Show reset form

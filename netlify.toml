@@ -9,6 +9,11 @@
   status = 200
 
 [[redirects]]
+  from = "/providers/reset-password"
+  to = "/.netlify/functions/reset-password"
+  status = 200
+
+[[redirects]]
   from = "/providers/new"
   to = "/.netlify/functions/provider-new"
   status = 200
@@ -26,11 +31,6 @@
 [[redirects]]
   from = "/providers/:provider_id/forgot-password"
   to = "/.netlify/functions/provider-password-reset"
-  status = 200
-
-[[redirects]]
-  from = "/providers/reset-password"
-  to = "/.netlify/functions/reset-password"
   status = 200
 
 [[redirects]]

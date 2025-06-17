@@ -24,6 +24,16 @@
   status = 200
 
 [[redirects]]
+  from = "/providers/:provider_id/forgot-password"
+  to = "/.netlify/functions/provider-password-reset"
+  status = 200
+
+[[redirects]]
+  from = "/providers/reset-password"
+  to = "/.netlify/functions/reset-password"
+  status = 200
+
+[[redirects]]
   from = "/providers/:provider_id/admin/stats"
   to = "/.netlify/functions/provider-stats?provider_id=:provider_id"
   status = 200

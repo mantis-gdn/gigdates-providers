@@ -22,7 +22,6 @@ exports.handler = async function(event) {
     const form = new URLSearchParams(event.body);
     const enteredPassword = form.get('login_password');
 
-    // Fetch hashed password from DB
     const [[provider]] = await pool.query(
       'SELECT login_password FROM providers WHERE provider_id = ?',
       [providerId]
@@ -44,7 +43,6 @@ exports.handler = async function(event) {
       };
     }
 
-    // Set a cookie for session
     return {
       statusCode: 302,
       headers: {
@@ -55,7 +53,6 @@ exports.handler = async function(event) {
     };
   }
 
-  // GET login form
   const html = `
   <!DOCTYPE html>
   <html>
@@ -64,22 +61,63 @@ exports.handler = async function(event) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Provider Login</title>
     <style>
-      body { font-family: sans-serif; background: #000; color: #fff; padding: 1em; }
-      h1 { color: #ffcc00; }
-      label { display: block; margin-top: 1em; }
-      input { width: 100%; padding: 0.5em; margin-top: 0.2em; }
-      button { margin-top: 1em; padding: 0.5em 1em; background: #ffcc00; border: none; color: #000; font-weight: bold; cursor: pointer; }
-      button:hover { background: #ffaa00; }
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #000;
+        color: #fff;
+        padding: 1em;
+        max-width: 500px;
+        margin: auto;
+      }
+      h1 {
+        color: #ffcc00;
+      }
+      label {
+        display: block;
+        margin-top: 1em;
+      }
+      input {
+        width: 100%;
+        padding: 0.5em;
+        margin-top: 0.2em;
+        border: none;
+        border-radius: 6px;
+        background: #222;
+        color: #fff;
+      }
+      button {
+        margin-top: 1em;
+        padding: 0.6em 1.2em;
+        background: #ffcc00;
+        border: none;
+        color: #000;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #ffaa00;
+      }
+      .forgot-link {
+        margin-top: 1em;
+        display: block;
+        color: #20b2aa;
+        text-decoration: none;
+      }
+      .forgot-link:hover {
+        text-decoration: underline;
+      }
     </style>
   </head>
   <body>
-    <h1>Login</h1>
+    <h1>Provider Login</h1>
     <form method="POST">
       <label>Password:
         <input type="password" name="login_password" required>
       </label>
       <button type="submit">Log In</button>
     </form>
+    <a class="forgot-link" href="/providers/${providerId}/forgot-password">Forgot your password?</a>
   </body>
   </html>
   `;

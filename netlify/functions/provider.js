@@ -77,6 +77,7 @@ Referral Source: ${form.referral_source}`.trim();
         from: process.env.EMAIL_FROM,
         to: provider.email || process.env.EMAIL_TO,
         subject: `New Lead for ${provider.name}`,
+        replyTo: form.client_email, // So provider can reply directly to client
         text: adminText
       });
 
@@ -97,8 +98,10 @@ If you have any urgent questions, feel free to reply to this email.
         from: process.env.EMAIL_FROM,
         to: form.client_email,
         subject: `Thanks for contacting ${provider.name}`,
+        replyTo: provider.email, // So client can respond directly to provider
         text: confirmationText
       });
+      console.log(`${provider.email}`);
 
       const queryParams = new URLSearchParams({
         submitted: 'true',

@@ -32,7 +32,7 @@ exports.handler = async function (event) {
       });
 
       const [providerRows] = await pool.query(
-        'SELECT name, email FROM providers WHERE provider_id = ? LIMIT 1',
+        'SELECT name, contact_email FROM providers WHERE provider_id = ? LIMIT 1',
         [form.provider_id]
       );
       const provider = providerRows[0] || {};
@@ -75,7 +75,7 @@ Referral Source: ${form.referral_source}`.trim();
 
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
-        to: provider.email || process.env.EMAIL_TO,
+        to: provider.contact_email || process.env.EMAIL_TO,
         subject: `New Lead for ${provider.name}`,
         replyTo: form.client_email, // So provider can reply directly to client
         text: adminText
@@ -98,10 +98,9 @@ If you have any urgent questions, feel free to reply to this email.
         from: process.env.EMAIL_FROM,
         to: form.client_email,
         subject: `Thanks for contacting ${provider.name}`,
-        replyTo: provider.email, // So client can respond directly to provider
+        replyTo: provider.contact_email, // So client can respond directly to provider
         text: confirmationText
       });
-      console.log(`${provider.email}`);
 
       const queryParams = new URLSearchParams({
         submitted: 'true',

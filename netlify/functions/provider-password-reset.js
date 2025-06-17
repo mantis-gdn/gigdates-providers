@@ -16,11 +16,11 @@ exports.handler = async function (event) {
 
   if (event.httpMethod === 'POST') {
     const form = new URLSearchParams(event.body);
-    const email = form.get('provider_email');
+    const contact_email = form.get('contact_email');
 
     const [[provider]] = await pool.query(
-      'SELECT provider_id, name FROM providers WHERE email = ? LIMIT 1',
-      [email]
+      'SELECT provider_id, name FROM providers WHERE contact_email = ? LIMIT 1',
+      [contact_email]
     );
 
     if (!provider) {
@@ -42,7 +42,7 @@ exports.handler = async function (event) {
 
     await resend.emails.send({
       from: process.env.EMAIL_FROM,
-      to: email,
+      to: contact_email,
       subject: 'Reset your password on Gig Dates Network',
       text: `Hi ${provider.name},\n\nClick the link below to reset your password:\n\n${resetLink}\n\nThis link will expire in 30 minutes.\n\n– Gig Dates Team`,
       replyTo: 'support@gigdates.net'
@@ -102,7 +102,7 @@ exports.handler = async function (event) {
     <h1>Reset Your Password</h1>
     <form method="POST">
       <label for="email">Enter your email address:</label>
-      <input type="email" name="provider_email" required>
+      <input type="contact_email" name="provider_email" required>
       <button type="submit">Send Reset Link</button>
     </form>
   </body>

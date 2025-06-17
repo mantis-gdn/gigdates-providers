@@ -96,9 +96,10 @@ exports.handler = async function (event) {
           }
 
           await pool.query(
-            `UPDATE providers SET name = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?, style_css = ? WHERE provider_id = ?`,
+            `UPDATE providers SET name = ?, email = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?, style_css = ? WHERE provider_id = ?`,
             [
               fields.name,
+              fields.email || '',
               fields.bio,
               fields.website,
               fields.facebook,
@@ -218,6 +219,7 @@ exports.handler = async function (event) {
     </nav>
     <form method="POST" enctype="multipart/form-data">
       <label>Name: <input name="name" value="${provider.name}" /></label>
+      <label>Email: <input name="email" value="${provider.email || ''}" type="email" /></label>
       <label>Bio: <textarea name="bio">${provider.bio || ''}</textarea></label>
       <label>Website: <input name="website" value="${provider.website || ''}" /></label>
       <label>Facebook: <input name="facebook" value="${provider.facebook || ''}" /></label>

@@ -32,7 +32,7 @@ exports.handler = async function (event) {
       });
 
       const [providerRows] = await pool.query(
-        'SELECT email FROM providers WHERE provider_id = ? LIMIT 1',
+        'SELECT name, email FROM providers WHERE provider_id = ? LIMIT 1',
         [form.provider_id]
       );
       const provider = providerRows[0] || {};
@@ -59,7 +59,7 @@ exports.handler = async function (event) {
       const resend = new Resend(process.env.RESEND_API_KEY);
 
       const adminText = `
-New lead for ${form.provider_id}!
+New lead for ${provider.name}!
 
 Name: ${form.client_name}
 Email: ${form.client_email}
@@ -76,14 +76,14 @@ Referral Source: ${form.referral_source}`.trim();
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
         to: provider.email || process.env.EMAIL_TO,
-        subject: `New Lead for ${form.provider_id}`,
+        subject: `New Lead for ${provider.name}`,
         text: adminText
       });
 
       const confirmationText = `
 Hi ${form.client_name},
 
-Thanks for reaching out to ${form.provider_id} through Gig Dates Network!
+Thanks for reaching out to ${provider.name} through Gig Dates Network!
 
 We received your request for: ${form.service_requested}
 
@@ -96,7 +96,7 @@ If you have any urgent questions, feel free to reply to this email.
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
         to: form.client_email,
-        subject: `Thanks for contacting ${form.provider_id}`,
+        subject: `Thanks for contacting ${provider.name}`,
         text: confirmationText
       });
 

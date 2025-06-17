@@ -96,7 +96,7 @@ exports.handler = async function (event) {
           }
 
           await pool.query(
-            `UPDATE providers SET name = ?, contadt_email = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?, style_css = ? WHERE provider_id = ?`,
+            `UPDATE providers SET name = ?, contact_email = ?, bio = ?, website = ?, facebook = ?, instagram = ?, youtube = ?, logo_url = ?, login_password = ?, style_css = ? WHERE provider_id = ?`,
             [
               fields.name,
               fields.contact_email || '',

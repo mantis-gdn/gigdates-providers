@@ -31,6 +31,12 @@ exports.handler = async function (event) {
         ssl: { rejectUnauthorized: true }
       });
 
+      const [providerRows] = await pool.query(
+        'SELECT email FROM providers WHERE provider_id = ? LIMIT 1',
+        [form.provider_id]
+      );
+      const provider = providerRows[0] || {};
+
       await pool.query(
         `INSERT INTO provider_leads (
           provider_id, client_name, client_email, client_phone,
@@ -69,7 +75,7 @@ Referral Source: ${form.referral_source}`.trim();
 
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
-        to: process.env.EMAIL_TO,
+        to: provider.email || process.env.EMAIL_TO,
         subject: `New Lead for ${form.provider_id}`,
         text: adminText
       });

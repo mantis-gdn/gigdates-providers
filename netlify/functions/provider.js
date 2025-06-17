@@ -213,7 +213,7 @@ If you have any urgent questions, feel free to reply to this email.
           <input type="text" name="referral_source">
         </label>
 
-        <button type="submit">Submit Lead</button>
+        <button type="submit">Submit Inquiry</button>
       </form>
     `;
 

@@ -102,7 +102,7 @@ exports.handler = async function (event) {
     <h1>Reset Your Password</h1>
     <form method="POST">
       <label for="email">Enter your email address:</label>
-      <input type="contact_email" name="provider_email" required>
+      <input type="email" name="contact_email" required>
       <button type="submit">Send Reset Link</button>
     </form>
   </body>

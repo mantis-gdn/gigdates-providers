@@ -14,7 +14,6 @@ exports.handler = async function () {
     const [providers] = await pool.query('SELECT * FROM providers');
     const [services] = await pool.query('SELECT * FROM provider_services');
 
-    // Group services by provider_id
     const servicesByProvider = {};
     services.forEach(service => {
       if (!servicesByProvider[service.provider_id]) {
@@ -31,7 +30,7 @@ exports.handler = async function () {
 
       return `
         <div class="provider-card">
-          ${provider.logo_url ? `<img src="${provider.logo_url}" alt="${provider.name} Logo">` : ''}
+          ${provider.logo_url ? `<img class="provider-logo" src="${provider.logo_url}" alt="${provider.name} Logo">` : ''}
           <h2>${provider.name}</h2>
           <p>${provider.bio || ''}</p>
           <ul>${servicePreview}</ul>
@@ -45,61 +44,113 @@ exports.handler = async function () {
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Gig Dates Network – Providers</title>
+  <title>Gig Dates Provider Network</title>
   <style>
     body {
-      background: #111;
+      background: #000;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
-      padding: 2em;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      text-align: center;
+      padding: 2em 1em;
+      background: #111;
+    }
+
+    header img {
+      max-width: 200px;
+      height: auto;
+      margin-bottom: 1em;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2em;
+      color: #fff;
+    }
+
+    main {
+      padding: 2em 1em;
       max-width: 1000px;
       margin: auto;
     }
-    h1 {
-      text-align: center;
-      color: #ffcc00;
-      margin-bottom: 1em;
-    }
+
     .provider-card {
-      background: #222;
+      background: #1a1a1a;
       border-radius: 12px;
-      padding: 1.2em;
+      padding: 1.5em;
       margin-bottom: 2em;
-      box-shadow: 0 0 12px rgba(255, 204, 0, 0.2);
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.2);
+      transition: transform 0.2s ease;
     }
-    .provider-card img {
+
+    .provider-card:hover {
+      transform: scale(1.02);
+    }
+
+    .provider-logo {
       max-width: 150px;
       height: auto;
-      display: block;
       margin-bottom: 1em;
+      display: block;
     }
+
     .provider-card h2 {
-      margin-top: 0;
-      color: #ffcc00;
+      margin: 0.5em 0;
+      color: #00aaff;
     }
+
+    .provider-card p {
+      font-size: 0.95em;
+      color: #ccc;
+    }
+
     .provider-card ul {
+      margin: 1em 0;
       padding-left: 1.2em;
+      list-style: disc;
     }
+
     .provider-card li {
       margin-bottom: 0.5em;
     }
-    a {
+
+    .provider-card a {
       display: inline-block;
-      background: #ffcc00;
+      background: #00aaff;
       color: #000;
-      padding: 0.5em 1em;
+      padding: 0.5em 1.2em;
       text-decoration: none;
+      font-weight: bold;
       border-radius: 6px;
-      margin-top: 0.5em;
     }
-    a:hover {
-      background: #ffaa00;
+
+    .provider-card a:hover {
+      background: #0088cc;
+    }
+
+    @media (max-width: 600px) {
+      header img {
+        max-width: 140px;
+      }
+
+      .provider-card {
+        padding: 1em;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Our Featured Providers</h1>
-  ${providerCards}
+  <header>
+    <img src="/media/logo.png" alt="Gig Dates Provider Network Logo">
+    <h1>Our Featured Providers</h1>
+  </header>
+  <main>
+    ${providerCards}
+  </main>
 </body>
 </html>
 `;

@@ -61,7 +61,7 @@ exports.handler = async function () {
     }
 
     header img {
-      max-width: 200px;
+      max-width: 300px;
       height: auto;
       margin-bottom: 1em;
     }
@@ -134,7 +134,7 @@ exports.handler = async function () {
 
     @media (max-width: 600px) {
       header img {
-        max-width: 140px;
+        max-width: 300px;
       }
 
       .provider-card {

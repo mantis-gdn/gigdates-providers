@@ -57,7 +57,7 @@ exports.handler = async function () {
     header {
       text-align: center;
       padding: 2em 1em;
-      background: #111;
+      background: #000;
     }
 
     header img {

@@ -318,12 +318,12 @@ If you have any urgent questions, feel free to reply to this email.
     <h1>${provider.name}</h1>
     ${thankYouHtml}
     <p>${provider.bio}</p>
-    <p><a href="${provider.website}" target="_blank">Website</a></p>
+    <!-- <p><a href="${provider.website}" target="_blank">Website</a></p>
     <p>
       ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
       ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
       ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
-    </p>
+    </p>-->
     <h2>Services Offered</h2>
     <ul>${servicesHtml}</ul>
     ${formHtml}

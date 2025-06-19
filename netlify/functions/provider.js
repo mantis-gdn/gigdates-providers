@@ -21,6 +21,14 @@ exports.handler = async function (event) {
   if (isPost) {
     const form = querystring.parse(event.body);
 
+    // SPAM protection: honeypot field
+    if (form.botcheck && form.botcheck.trim() !== '') {
+      return {
+        statusCode: 400,
+        body: 'Spam detected. Submission rejected.'
+      };
+    }
+
     try {
       const pool = await mysql.createPool({
         host: process.env.DB_HOST,
@@ -77,7 +85,7 @@ Referral Source: ${form.referral_source}`.trim();
         from: process.env.EMAIL_FROM,
         to: provider.contact_email || process.env.EMAIL_TO,
         subject: `New Lead for ${provider.name}`,
-        replyTo: form.client_email, // So provider can reply directly to client
+        replyTo: form.client_email,
         text: adminText
       });
 
@@ -98,7 +106,7 @@ If you have any urgent questions, feel free to reply to this email.
         from: process.env.EMAIL_FROM,
         to: form.client_email,
         subject: `Thanks for contacting ${provider.name}`,
-        replyTo: provider.contact_email, // So client can respond directly to provider
+        replyTo: provider.contact_email,
         text: confirmationText
       });
 
@@ -211,6 +219,13 @@ If you have any urgent questions, feel free to reply to this email.
         <label>How did you hear about us?
           <input type="text" name="referral_source">
         </label>
+
+        <!-- Honeypot field -->
+        <div style="display:none;">
+          <label>Leave this field empty:
+            <input type="text" name="botcheck">
+          </label>
+        </div>
 
         <button type="submit">Submit Inquiry</button>
       </form>

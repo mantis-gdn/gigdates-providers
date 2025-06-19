@@ -21,6 +21,7 @@
     "bcryptjs": "^3.0.2",
     "busboy": "^1.6.0",
     "cloudinary": "^2.6.1",
+    "cookie": "^1.0.2",
     "dotenv": "^16.5.0",
     "mysql2": "^3.14.1",
     "resend": "^4.5.2",

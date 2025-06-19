@@ -60,4 +60,4 @@ function renderLoginForm(error = '') {
 </body>
 </html>
   `;
-}
+};

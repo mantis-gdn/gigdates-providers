@@ -309,9 +309,7 @@ If you have any urgent questions, feel free to reply to this email.
       h1 { font-size: 1.4em; }
       h2 { font-size: 1.1em; }
     }
-    #provider-theme {
       ${safeCSS}
-    }
   </style>
 </head>
 <body>

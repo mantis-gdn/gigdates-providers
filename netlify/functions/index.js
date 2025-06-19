@@ -11,7 +11,9 @@ exports.handler = async function () {
   });
 
   try {
-    const [providers] = await pool.query('SELECT * FROM providers');
+    const [providers] = await pool.query(
+      "SELECT * FROM providers WHERE status = 'active' ORDER BY date_added DESC"
+    );
     const [services] = await pool.query('SELECT * FROM provider_services');
 
     const servicesByProvider = {};
@@ -149,7 +151,7 @@ exports.handler = async function () {
     <h1>Our Featured Providers</h1>
   </header>
   <main>
-    ${providerCards}
+    ${providerCards || '<p>No active providers found at this time.</p>'}
   </main>
 </body>
 </html>

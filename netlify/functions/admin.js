@@ -1,7 +1,20 @@
+// netlify/functions/admin.js
 const mysql = require('mysql2/promise');
+const cookie = require('cookie');
 
 exports.handler = async function (event) {
-  const isPost = event.httpMethod === 'POST';
+  const cookies = cookie.parse(event.headers.cookie || '');
+  const isAuthenticated = cookies.admin_auth === process.env.ADMIN_PASSWORD;
+
+  if (!isAuthenticated) {
+    return {
+      statusCode: 302,
+      headers: {
+        Location: '/admin/login'
+      },
+      body: 'Redirecting to login...'
+    };
+  }
 
   const pool = await mysql.createPool({
     host: process.env.DB_HOST,
@@ -12,7 +25,7 @@ exports.handler = async function (event) {
     ssl: { rejectUnauthorized: true }
   });
 
-  if (isPost) {
+  if (event.httpMethod === 'POST') {
     const formData = new URLSearchParams(event.body);
     const purgeId = formData.get('purge');
     const statusChangeId = formData.get('status_change');
@@ -22,29 +35,28 @@ exports.handler = async function (event) {
       if (purgeId) {
         await pool.query('DELETE FROM provider_services WHERE provider_id = ?', [purgeId]);
         await pool.query('DELETE FROM providers WHERE provider_id = ?', [purgeId]);
-        return {
-          statusCode: 302,
-          headers: { Location: '/admin' },
-          body: 'Redirecting after purge...'
-        };
       } else if (statusChangeId && newStatus) {
         await pool.query('UPDATE providers SET status = ? WHERE provider_id = ?', [newStatus, statusChangeId]);
-        return {
-          statusCode: 302,
-          headers: { Location: '/admin' },
-          body: 'Redirecting after status update...'
-        };
       }
     } catch (err) {
-      return { statusCode: 500, body: 'Error updating provider: ' + err.message };
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: err.message })
+      };
     }
   }
 
-  const [providers] = await pool.query(
-    'SELECT * FROM providers ORDER BY date_added DESC'
-  );
+  const [providers] = await pool.query('SELECT * FROM providers ORDER BY date_added DESC');
   const [services] = await pool.query('SELECT * FROM provider_services');
 
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'text/html' },
+    body: renderAdminHTML(providers, services)
+  };
+};
+
+function renderAdminHTML(providers, services) {
   const servicesByProvider = {};
   services.forEach(service => {
     if (!servicesByProvider[service.provider_id]) {
@@ -74,7 +86,7 @@ exports.handler = async function (event) {
         <p><strong>Services:</strong></p>
         <ul>${serviceHTML || '<li>No services listed.</li>'}</ul>
 
-        <form method="POST" style="margin-top:10px;">
+        <form method="POST" enctype="application/x-www-form-urlencoded" style="margin-top:10px;">
           <input type="hidden" name="status_change" value="${provider.provider_id}">
           <label for="new_status_${provider.provider_id}">Change Status:</label>
           <select name="new_status" id="new_status_${provider.provider_id}">
@@ -84,15 +96,19 @@ exports.handler = async function (event) {
           <button type="submit" style="margin-left:8px; padding:4px 10px;">Update</button>
         </form>
 
-        <form method="POST" onsubmit="return confirm('Are you sure you want to PURGE this provider and all its data?');" style="margin-top:10px;">
+        <form method="POST" enctype="application/x-www-form-urlencoded"
+          onsubmit="return confirm('Are you sure you want to PURGE this provider and all its data?');"
+          style="margin-top:10px;">
           <input type="hidden" name="purge" value="${provider.provider_id}">
-          <button type="submit" style="background:red; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Purge Provider</button>
+          <button type="submit" style="background:red; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
+            Purge Provider
+          </button>
         </form>
       </div>
     `;
   }).join('');
 
-  const html = `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -101,14 +117,16 @@ exports.handler = async function (event) {
     </head>
     <body style="background:#000; color:#fff; font-family:sans-serif; padding:20px; max-width:900px; margin:auto;">
       <h1>All Providers</h1>
+      <form method="GET" action="/admin/logout">
+        <button type="submit" style="float:right; margin:0 0 10px 10px; padding:6px 12px; border-radius:6px; background:#444; color:#fff; border:none;">Logout</button>
+      </form>
+      <form method="GET" action="/providers/new">
+        <button type="submit" style="margin-bottom:20px; padding:10px 16px; background:#1e90ff; color:#fff; border:none; border-radius:6px;">
+          + Add New Provider
+        </button>
+      </form>
       ${providerCards || '<p>No providers found.</p>'}
     </body>
     </html>
   `;
-
-  return {
-    statusCode: 200,
-    headers: { 'Content-Type': 'text/html' },
-    body: html
-  };
-};
+}

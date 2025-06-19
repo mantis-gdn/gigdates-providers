@@ -11,6 +11,20 @@ cloudinary.config({
 });
 
 exports.handler = async function (event) {
+  const cookies = event.headers.cookie || '';
+  const sessionMatch = cookies.match(/admin_auth=([^;]+)/);
+  const sessionPassword = sessionMatch ? decodeURIComponent(sessionMatch[1]) : null;
+
+  if (sessionPassword !== process.env.ADMIN_PASSWORD) {
+    return {
+      statusCode: 302,
+      headers: {
+        Location: '/admin/login'
+      },
+      body: 'Redirecting to login...'
+    };
+  }
+
   if (
     event.httpMethod === 'POST' &&
     event.headers['content-type'] &&
@@ -62,7 +76,7 @@ exports.handler = async function (event) {
             ssl: { rejectUnauthorized: true },
           });
 
-          const [result] = await pool.query(
+          await pool.query(
             `INSERT INTO providers (provider_id, name, bio, website, facebook, instagram, youtube, logo_url, login_password)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
@@ -78,20 +92,39 @@ exports.handler = async function (event) {
             ]
           );
 
-          const providerId = fields.provider_id;
-
           resolve({
             statusCode: 302,
             headers: {
-              Location: `/providers/${providerId}/admin/profile`,
+              Location: `/providers/${fields.provider_id}/admin/profile`,
             },
             body: 'Redirecting...'
           });
         } catch (err) {
-          resolve({
-            statusCode: 500,
-            body: JSON.stringify({ error: err.message }),
-          });
+          if (err.errno === 1062 && err.sqlMessage.includes('provider_id')) {
+            resolve({
+              statusCode: 200,
+              headers: { 'Content-Type': 'text/html; charset=utf-8' },
+              body: `<!DOCTYPE html>
+              <html><head><meta charset="UTF-8"><title>Duplicate ID</title>
+              <style>
+                body { font-family: sans-serif; background: #000; color: #fff; text-align: center; padding: 2em; }
+                a { color: #ffcc00; text-decoration: none; font-weight: bold; }
+                .error-box { background: #111; padding: 2em; border: 1px solid #ff0000; border-radius: 8px; display: inline-block; }
+              </style>
+              </head><body>
+                <div class="error-box">
+                  <h1>⚠️ Provider ID Already Exists</h1>
+                  <p>The Provider ID <strong>${fields.provider_id}</strong> is already in use.</p>
+                  <p><a href="/providers/new">Click here to try again</a></p>
+                </div>
+              </body></html>`
+            });
+          } else {
+            resolve({
+              statusCode: 500,
+              body: JSON.stringify({ error: err.message }),
+            });
+          }
         }
       });
 
@@ -110,8 +143,11 @@ exports.handler = async function (event) {
     input, textarea { width: 100%; padding: 0.6em; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; box-sizing: border-box; margin-top: 0.4em; }
     button { background-color: #ffcc00; color: #000; font-weight: bold; padding: 0.7em 1.2em; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
     button:hover { background-color: #ffaa00; }
+    .logout { text-align: right; margin-bottom: 1em; }
+    .logout a { color: #ffcc00; font-weight: bold; text-decoration: none; }
   </style>
   </head><body>
+    <div class="logout"><a href="/admin/logout">Logout</a></div>
     <h1>Create New Provider</h1>
     <form method="POST" enctype="multipart/form-data">
       <label>Provider ID: <input name="provider_id" required /></label>
@@ -130,7 +166,7 @@ exports.handler = async function (event) {
 
   return {
     statusCode: 200,
-    headers: { 'Content-Type': 'text/html' },
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
     body: html,
   };
 };

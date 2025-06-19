@@ -38,7 +38,7 @@ exports.handler = async function (event) {
   });
 
   const [[provider]] = await pool.query(
-    'SELECT name, email FROM providers WHERE provider_id = ?',
+    'SELECT name, contact_email FROM providers WHERE provider_id = ?',
     [providerId]
   );
 
@@ -80,7 +80,7 @@ exports.handler = async function (event) {
         from: process.env.EMAIL_FROM,
         to: lead.client_email,
         subject: `Message from ${provider.name}`,
-        replyTo: provider.email,
+        replyTo: provider.contact_emailf,
         html: `<p>${messageText}</p><hr><h3>Lead Details</h3><p>${leadDetails}</p>`
       });
     }

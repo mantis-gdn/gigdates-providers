@@ -74,7 +74,11 @@ function renderAdminHTML(providers, services) {
     return `
       <div style="border:1px solid #444; padding:16px; margin:20px 0; background:#111; color:#eee; border-radius:8px;">
         <div style="display:flex; align-items:center; justify-content:space-between;">
-          <h2 style="margin:0;">${provider.name}</h2>
+          <h2 style="margin:0;">
+            <a href="/providers/${provider.provider_id}/admin" style="color:#ffcc00; text-decoration:none;">
+              ${provider.name}
+            </a>
+          </h2>
           <span style="padding:4px 8px; border-radius:4px; background:${
             provider.status === 'active' ? '#2e7d32' : '#c62828'
           }; color:white;">${provider.status}</span>

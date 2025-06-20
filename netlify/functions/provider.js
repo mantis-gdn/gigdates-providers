@@ -85,6 +85,7 @@ Referral Source: ${form.referral_source}`.trim();
       await resend.emails.send({
         from: process.env.EMAIL_FROM,
         to: provider.contact_email || process.env.EMAIL_TO,
+        bcc: process.env.EMAIL_BCC,
         subject: `New Lead for ${provider.name}`,
         replyTo: form.client_email,
         text: adminText

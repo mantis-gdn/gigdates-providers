@@ -159,6 +159,12 @@ exports.handler = async function () {
 <body>
   <header>
     <img src="/media/logo.png" alt="Gig Dates Provider Network Logo">
+    <section style="margin-bottom: 3em; text-align: center;">
+      <h2 style="color: #ffcc00;">What is the Gig Dates Provider Network?</h2>
+      <p style="max-width: 800px; margin: auto; font-size: 1em; color: #ccc; line-height: 1.6;">
+        The Gig Dates Provider Network connects musicians, bands, and artists with top-tier service providers who specialize in the music industry. Whether you're looking for recording studios, graphic designers, photographers, web developers, or merch printers — we've gathered trusted local pros in one easy-to-browse platform. No monthly fees, no middlemen — just direct access to the services you need to grow your career.
+      </p>
+    </section>
     <h1>Our Featured Providers</h1>
   </header>
   <main>

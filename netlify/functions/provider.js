@@ -1,3 +1,4 @@
+// netlify/functions/provider.js
 const mysql = require('mysql2/promise');
 const querystring = require('querystring');
 const { Resend } = require('resend');
@@ -293,23 +294,24 @@ If you have any urgent questions, feel free to reply to this email.
       height: auto;
       margin-bottom: 1em;
     }
+    .footer-logo {
+      display: block;
+      margin: 3em auto 1em;
+      text-align: center;
+      max-width: 160px;
+      opacity: 0.8;
+    }
     @media (max-width: 768px) {
-      body {
-        padding: 1em;
-        font-size: 1em;
-      }
+      body { font-size: 1em; padding: 1em; }
       h1 { font-size: 1.6em; }
       h2 { font-size: 1.3em; }
     }
     @media (max-width: 480px) {
-      body {
-        padding: 0.8em;
-        font-size: 0.95em;
-      }
+      body { font-size: 0.95em; padding: 0.8em; }
       h1 { font-size: 1.4em; }
       h2 { font-size: 1.1em; }
     }
-      ${safeCSS}
+    ${safeCSS}
   </style>
 </head>
 <body>
@@ -318,16 +320,13 @@ If you have any urgent questions, feel free to reply to this email.
     <h1>${provider.name}</h1>
     ${thankYouHtml}
     <p>${provider.bio}</p>
-    <!-- <p><a href="${provider.website}" target="_blank">Website</a></p>
-    <p>
-      ${provider.facebook ? `<a href="${provider.facebook}" target="_blank">Facebook</a> ` : ""}
-      ${provider.instagram ? `<a href="${provider.instagram}" target="_blank">Instagram</a> ` : ""}
-      ${provider.youtube ? `<a href="${provider.youtube}" target="_blank">YouTube</a> ` : ""}
-    </p>-->
     <h2>Services Offered</h2>
     <ul>${servicesHtml}</ul>
     ${formHtml}
   </div>
+  <a href="/providers">
+    <img src="/media/logo.png" alt="Gig Dates Provider Network Logo" class="footer-logo">
+  </a>
 </body>
 </html>
     `;

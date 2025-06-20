@@ -1,5 +1,6 @@
 // netlify/functions/provider-stats.js
 const mysql = require('mysql2/promise');
+const cookie = require('cookie');
 
 exports.handler = async function(event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/admin\/stats/);
@@ -9,11 +10,11 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
-  const cookies = event.headers.cookie || '';
-  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
-  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+  const cookies = cookie.parse(event.headers.cookie || '');
+  const sessionProviderId = cookies.provider_id || null;
+  const isAdmin = cookies.admin_auth === process.env.ADMIN_PASSWORD;
 
-  if (sessionProviderId !== providerId) {
+  if (sessionProviderId !== providerId && !isAdmin) {
     return {
       statusCode: 302,
       headers: {
@@ -65,6 +66,7 @@ exports.handler = async function(event) {
         display: flex;
         gap: 0.5em;
         margin-bottom: 1em;
+        flex-wrap: wrap;
       }
       .nav-buttons a {
         background: #222;
@@ -74,6 +76,8 @@ exports.handler = async function(event) {
         border-radius: 4px;
         font-weight: bold;
         transition: background 0.2s;
+        flex: 1 1 auto;
+        text-align: center;
       }
       .nav-buttons a:hover {
         background: #444;

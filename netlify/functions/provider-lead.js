@@ -1,6 +1,7 @@
 // netlify/functions/provider-lead.js
 const mysql = require('mysql2/promise');
 const { Resend } = require('resend');
+const cookie = require('cookie');
 
 exports.handler = async function (event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/admin\/([^\/]+)/);
@@ -11,11 +12,11 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: 'Missing provider ID or lead ID' };
   }
 
-  const cookies = event.headers.cookie || '';
-  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
-  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+  const cookies = cookie.parse(event.headers.cookie || '');
+  const sessionProviderId = cookies.provider_id || null;
+  const isAdmin = cookies.admin_auth === process.env.ADMIN_PASSWORD;
 
-  if (sessionProviderId !== providerId) {
+  if (sessionProviderId !== providerId && !isAdmin) {
     return {
       statusCode: 302,
       headers: {
@@ -80,7 +81,7 @@ exports.handler = async function (event) {
         from: process.env.EMAIL_FROM,
         to: lead.client_email,
         subject: `Message from ${provider.name}`,
-        replyTo: provider.contact_emailf,
+        replyTo: provider.contact_email,
         html: `<p>${messageText}</p><hr><h3>Lead Details</h3><p>${leadDetails}</p>`
       });
     }
@@ -119,14 +120,12 @@ exports.handler = async function (event) {
         margin-left: auto;
         margin-right: auto;
       }
-
       h1 {
         color: #ffcc00;
         font-size: 1.8em;
         margin-bottom: 0.5em;
         text-align: center;
       }
-
       nav {
         display: flex;
         flex-wrap: wrap;
@@ -134,7 +133,6 @@ exports.handler = async function (event) {
         justify-content: center;
         margin-bottom: 1.5em;
       }
-
       nav a {
         padding: 0.6em 1em;
         border-radius: 6px;
@@ -144,24 +142,20 @@ exports.handler = async function (event) {
         flex: 1 1 auto;
         text-align: center;
       }
-
       .blue { background-color: #007bff; }
       .purple { background-color: #6f42c1; }
       .teal { background-color: #20c997; }
       .red { background-color: #dc3545; }
       nav a:hover { opacity: 0.85; }
-
       .field {
         margin-bottom: 1.2em;
       }
-
       label {
         display: block;
         font-weight: bold;
         margin-bottom: 0.3em;
         font-size: 1em;
       }
-
       .value {
         padding: 0.5em;
         background: #111;
@@ -169,7 +163,6 @@ exports.handler = async function (event) {
         word-wrap: break-word;
         font-size: 0.95em;
       }
-
       select,
       button,
       textarea {
@@ -182,7 +175,6 @@ exports.handler = async function (event) {
         background: #222;
         color: #fff;
       }
-
       button {
         background-color: #ffcc00;
         color: #000;
@@ -190,35 +182,28 @@ exports.handler = async function (event) {
         cursor: pointer;
         margin-top: 0.5em;
       }
-
       button:hover {
         opacity: 0.9;
       }
-
       hr {
         margin: 2em 0;
         border: 0;
         border-top: 1px solid #333;
       }
-
       @media (max-width: 600px) {
         h1 {
           font-size: 1.4em;
         }
-
         nav {
           flex-direction: column;
           gap: 0.75em;
         }
-
         nav a {
           font-size: 0.95em;
         }
-
         textarea {
           font-size: 0.9em;
         }
-
         .value {
           font-size: 0.9em;
         }

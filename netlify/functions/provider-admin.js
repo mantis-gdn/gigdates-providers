@@ -1,5 +1,6 @@
 // netlify/functions/provider-admin.js
 const mysql = require('mysql2/promise');
+const cookie = require('cookie');
 
 exports.handler = async function(event) {
   const match = event.path.match(/\/providers\/([^\/]+)\/admin/);
@@ -9,11 +10,11 @@ exports.handler = async function(event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
-  const cookies = event.headers.cookie || '';
-  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
-  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+  const cookies = cookie.parse(event.headers.cookie || '');
+  const sessionProviderId = cookies.provider_id || null;
+  const isAdmin = cookies.admin_auth === process.env.ADMIN_PASSWORD;
 
-  if (sessionProviderId !== providerId) {
+  if (sessionProviderId !== providerId && !isAdmin) {
     return {
       statusCode: 302,
       headers: {

@@ -3,6 +3,7 @@ const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('cloudinary').v2;
 const busboy = require('busboy');
+const cookie = require('cookie');
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,11 +19,11 @@ exports.handler = async function (event) {
     return { statusCode: 400, body: 'Missing provider ID' };
   }
 
-  const cookies = event.headers.cookie || '';
-  const sessionMatch = cookies.match(/provider_id=([^;]+)/);
-  const sessionProviderId = sessionMatch ? sessionMatch[1] : null;
+  const cookies = cookie.parse(event.headers.cookie || '');
+  const sessionProviderId = cookies.provider_id || null;
+  const isAdmin = cookies.admin_auth === process.env.ADMIN_PASSWORD;
 
-  if (sessionProviderId !== providerId) {
+  if (sessionProviderId !== providerId && !isAdmin) {
     return {
       statusCode: 302,
       headers: {
@@ -43,6 +44,7 @@ exports.handler = async function (event) {
 
   if (
     event.httpMethod === 'POST' &&
+    event.headers['content-type'] &&
     event.headers['content-type'].startsWith('multipart/form-data')
   ) {
     return new Promise((resolve, reject) => {

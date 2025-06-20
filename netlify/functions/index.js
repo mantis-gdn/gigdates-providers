@@ -1,3 +1,4 @@
+// netlify/functions/index.js
 const mysql = require('mysql2/promise');
 
 exports.handler = async function () {
@@ -33,7 +34,7 @@ exports.handler = async function () {
       return `
         <div class="provider-card">
           ${provider.logo_url ? `<img class="provider-logo" src="${provider.logo_url}" alt="${provider.name} Logo">` : ''}
-          <h2>${provider.name}</h2>
+          <h2><a href="/providers/${provider.provider_id}" class="provider-link">${provider.name}</a></h2>
           <p>${provider.bio || ''}</p>
           <ul>${servicePreview}</ul>
           <a href="/providers/${provider.provider_id}">View Profile</a>
@@ -102,7 +103,16 @@ exports.handler = async function () {
 
     .provider-card h2 {
       margin: 0.5em 0;
+      font-size: 1.4em;
+    }
+
+    .provider-link {
       color: #00aaff;
+      text-decoration: none;
+    }
+
+    .provider-link:hover {
+      text-decoration: underline;
     }
 
     .provider-card p {
@@ -128,6 +138,7 @@ exports.handler = async function () {
       text-decoration: none;
       font-weight: bold;
       border-radius: 6px;
+      margin-top: 0.5em;
     }
 
     .provider-card a:hover {

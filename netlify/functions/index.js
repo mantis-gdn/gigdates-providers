@@ -95,7 +95,7 @@ exports.handler = async function () {
     }
 
     .provider-logo {
-      max-width: 150px;
+      max-width: 350px;
       height: auto;
       margin-bottom: 1em;
       display: block;

@@ -132,9 +132,9 @@ exports.handler = async function () {
 
     .provider-card a {
       display: inline-block;
-      background: #00aaff;
-      color: #000;
-      padding: 0.5em 1.2em;
+      color: #00aaff;
+      font-size: 2em;
+      padding: 0.0em;
       text-decoration: none;
       font-weight: bold;
       border-radius: 6px;
@@ -142,7 +142,7 @@ exports.handler = async function () {
     }
 
     .provider-card a:hover {
-      background: #0088cc;
+      background: #000;
     }
 
     @media (max-width: 600px) {

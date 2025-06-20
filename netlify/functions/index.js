@@ -169,6 +169,17 @@ exports.handler = async function () {
   </header>
   <main>
     ${providerCards || '<p>No active providers found at this time.</p>'}
+    <section style="margin-bottom: 3em; text-align: center;">
+      <h2 style="color: #00ffaa;">Are You a Provider?</h2>
+      <p style="max-width: 800px; margin: auto; font-size: 1em; color: #ccc; line-height: 1.6;">
+        If you offer services for bands, musicians, or venues — like studio recording, design, promotion, or tech — we want you on board. Listing your services on Gig Dates is <strong>free</strong> to start, and you only pay per lead. No subscriptions. No clutter. Just real connections with artists who need what you do.
+      </p>
+      <p style="margin-top: 1.2em;">
+        <a href="mailto:info@gigdates.net" style="display: inline-block; background: #00ffaa; color: #000; padding: 0.75em 1.5em; border-radius: 8px; font-weight: bold; text-decoration: none;">
+          Email Us to Join
+        </a>
+      </p>
+    </section>
   </main>
 </body>
 </html>

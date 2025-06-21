@@ -5,7 +5,9 @@ const { Resend } = require('resend');
 
 // Sanitize CSS to prevent malicious injections
 const sanitizeCSS = (css) =>
-  (css || '').replace(/<\/?script[^>]*>/gi, '').replace(/url\(['"]?javascript:[^'"]*['"]?\)/gi, '');
+  (css || '')
+    .replace(/<\/?script[^>]*>/gi, '')
+    .replace(/url\(['"]?javascript:[^'"]*['"]?\)/gi, '');
 
 exports.handler = async function (event) {
   const isPost = event.httpMethod === 'POST';
@@ -15,9 +17,18 @@ exports.handler = async function (event) {
   if (!providerId) {
     return {
       statusCode: 400,
-      body: 'Missing or invalid provider ID in URL.'
+      body: 'Missing or invalid provider ID in URL.',
     };
   }
+
+  const pool = await mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
+    ssl: { rejectUnauthorized: true },
+  });
 
   if (isPost) {
     const form = querystring.parse(event.body);
@@ -26,26 +37,31 @@ exports.handler = async function (event) {
     if (form.botcheck && form.botcheck.trim() !== '') {
       return {
         statusCode: 400,
-        body: 'Spam detected. Submission rejected.'
+        body: 'Spam detected. Submission rejected.',
       };
     }
 
     try {
-      const pool = await mysql.createPool({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-        port: process.env.DB_PORT,
-        ssl: { rejectUnauthorized: true }
-      });
-
-      const [providerRows] = await pool.query(
-        'SELECT name, contact_email FROM providers WHERE provider_id = ? LIMIT 1',
+      // Check if provider has credits
+      const [[creditRow]] = await pool.query(
+        'SELECT lead_credits, name, contact_email FROM providers WHERE provider_id = ? LIMIT 1',
         [form.provider_id]
       );
-      const provider = providerRows[0] || {};
 
+      if (!creditRow) {
+        return { statusCode: 404, body: 'Provider not found.' };
+      }
+
+      if (creditRow.lead_credits <= 0) {
+        return {
+          statusCode: 403,
+          body: 'This provider is not accepting new leads at the moment.',
+        };
+      }
+
+      const provider = creditRow;
+
+      // Insert new lead
       await pool.query(
         `INSERT INTO provider_leads (
           provider_id, client_name, client_email, client_phone,
@@ -61,8 +77,14 @@ exports.handler = async function (event) {
           form.preferred_timeframe || '',
           form.budget || '',
           form.message || '',
-          form.referral_source || ''
+          form.referral_source || '',
         ]
+      );
+
+      // Decrement lead credit
+      await pool.query(
+        'UPDATE providers SET lead_credits = lead_credits - 1 WHERE provider_id = ?',
+        [form.provider_id]
       );
 
       const resend = new Resend(process.env.RESEND_API_KEY);
@@ -88,7 +110,7 @@ Referral Source: ${form.referral_source}`.trim();
         bcc: process.env.EMAIL_BCC,
         subject: `New Lead for ${provider.name}`,
         replyTo: form.client_email,
-        text: adminText
+        text: adminText,
       });
 
       const confirmationText = `
@@ -109,50 +131,44 @@ If you have any urgent questions, feel free to reply to this email.
         to: form.client_email,
         subject: `Thanks for contacting ${provider.name}`,
         replyTo: provider.contact_email,
-        text: confirmationText
+        text: confirmationText,
       });
 
       const queryParams = new URLSearchParams({
         submitted: 'true',
         name: form.client_name,
         email: form.client_email,
-        service: form.service_requested
+        service: form.service_requested,
       }).toString();
 
       return {
         statusCode: 302,
         headers: {
-          Location: `/providers/${form.provider_id}?${queryParams}`
+          Location: `/providers/${form.provider_id}?${queryParams}`,
         },
-        body: 'Redirecting...'
+        body: 'Redirecting...',
       };
     } catch (err) {
       return {
         statusCode: 500,
-        body: `Database or email error: ${err.message}`
+        body: `Database or email error: ${err.message}`,
       };
     }
   }
 
+  // GET request logic
   const qs = event.queryStringParameters || {};
   const isThankYou = qs.submitted === 'true';
 
-  const thankYouHtml = isThankYou ? `
+  const thankYouHtml = isThankYou
+    ? `
     <div class="thank-you">
       <h2>Thank you, ${qs.name}!</h2>
       <p>We’ve received your request for <strong>${qs.service}</strong>.</p>
       <p>A confirmation has been sent to <strong>${qs.email}</strong>.</p>
     </div>
-  ` : '';
-
-  const pool = await mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
-    ssl: { rejectUnauthorized: true }
-  });
+  `
+    : '';
 
   try {
     const [providerRows] = await pool.query(
@@ -165,24 +181,33 @@ If you have any urgent questions, feel free to reply to this email.
     );
 
     if (!providerRows.length) {
-      return { statusCode: 404, body: "Provider not found" };
+      return { statusCode: 404, body: 'Provider not found' };
     }
 
     const provider = providerRows[0];
     const safeCSS = sanitizeCSS(provider.style_css);
+    const hasCredits = provider.lead_credits > 0;
 
-    const servicesHtml = serviceRows.map(service => `
+    const servicesHtml = serviceRows
+      .map(
+        (service) => `
       <li>
         <strong>${service.name}</strong> — ${service.description}<br>
         <em>$${service.starting_price} ${service.unit}</em>
       </li>
-    `).join('');
+    `
+      )
+      .join('');
 
-    const serviceOptions = serviceRows.map(service => `
-      <option value="${service.name}">${service.name}</option>
-    `).join('');
+    const serviceOptions = serviceRows
+      .map(
+        (service) =>
+          `<option value="${service.name}">${service.name}</option>`
+      )
+      .join('');
 
-    const formHtml = `
+    const formHtml = hasCredits
+      ? `
       <h2>Submit an Inquiry</h2>
       <form action="/providers/${providerId}" method="POST">
         <input type="hidden" name="provider_id" value="${providerId}" />
@@ -231,7 +256,8 @@ If you have any urgent questions, feel free to reply to this email.
 
         <button type="submit">Submit Inquiry</button>
       </form>
-    `;
+    `
+      : `<p style="color: orange;"><strong>This provider is currently not accepting inquiries.</strong></p>`;
 
     const html = `
 <!DOCTYPE html>
@@ -246,11 +272,9 @@ If you have any urgent questions, feel free to reply to this email.
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       padding: 1em;
-      margin: 0;
-      line-height: 1.6;
+      margin: 0 auto;
       max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
+      line-height: 1.6;
     }
     a { color: #1e90ff; text-decoration: none; }
     h1, h2 { color: #ffcc00; margin-top: 1.5em; }
@@ -335,12 +359,12 @@ If you have any urgent questions, feel free to reply to this email.
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'text/html' },
-      body: html
+      body: html,
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: `Database error on fetch: ${err.message}`
+      body: `Database error on fetch: ${err.message}`,
     };
   }
 };

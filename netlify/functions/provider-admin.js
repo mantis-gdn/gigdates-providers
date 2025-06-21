@@ -62,7 +62,7 @@ exports.handler = async function(event) {
   }
 
   const [providerRows] = await pool.query(
-    'SELECT name FROM providers WHERE provider_id = ?',
+    'SELECT name, lead_credits FROM providers WHERE provider_id = ?',
     [providerId]
   );
 
@@ -74,6 +74,7 @@ exports.handler = async function(event) {
   }
 
   const providerName = providerRows[0].name;
+  const leadCredits = providerRows[0].lead_credits;
 
   const [leads] = await pool.query(
     'SELECT * FROM provider_leads WHERE provider_id = ? ORDER BY submitted_at DESC',
@@ -98,7 +99,12 @@ exports.handler = async function(event) {
         color: #ffcc00;
         text-align: center;
         font-size: 1.75em;
-        margin-bottom: 1em;
+        margin-bottom: 0.25em;
+      }
+      p.lead-credits {
+        text-align: center;
+        font-size: 1.1em;
+        margin-bottom: 1.5em;
       }
       nav {
         display: flex;
@@ -141,7 +147,7 @@ exports.handler = async function(event) {
         color: #fff;
       }
       form { margin: 0; }
-      a { color: #ffcc00; text-decoration: underline; }
+      a { color: #1e90ff; text-decoration: underline; }
       @media (max-width: 768px) {
         table, thead, tbody, th, td, tr { display: block; }
         thead { display: none; }
@@ -173,6 +179,12 @@ exports.handler = async function(event) {
   </head>
   <body>
     <h1>Admin Panel for ${providerName}</h1>
+    <p class="lead-credits">
+      <strong>Remaining Lead Credits:</strong> ${leadCredits} lead${leadCredits === 1 ? '' : 's'}<br>
+      <span style="font-size: 0.9em;">
+        Need more? <a href="mailto:info@gigdates.net" style="color:#1e90ff;">Email us to request a refill</a>.
+      </span>
+    </p>
     <nav>
       <a class="nav-btn blue" href="/providers/${providerId}/admin">Dashboard</a>
       <a class="nav-btn purple" href="/providers/${providerId}/admin/stats">Stats</a>
